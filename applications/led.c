@@ -22,7 +22,6 @@ static led_t *learn_beep = RT_NULL;
 static led_t *key_led = RT_NULL;
 static led_t *beep_three = RT_NULL;
 static led_t *off_red_led_three = RT_NULL;
-static led_t *loss_led = RT_NULL;
 static led_t *wifi_green_led = RT_NULL;
 static led_t *wifi_red_led = RT_NULL;
 static led_t *wifi_blue_led = RT_NULL;
@@ -105,14 +104,6 @@ static void led_run(void *parameter)
     }
 }
 
-void loss_led_start(void)
-{
-    led_start(loss_led);
-}
-void loss_led_stop(void)
-{
-    led_stop(loss_led);
-}
 void beep_three_times(void)
 {
     led_start(beep_three);
@@ -193,9 +184,9 @@ void led_offline_start(void)
 }
 void led_master_lost_start(void)
 {
-    led_set_mode(beep, LOOP_PERMANENT,"200,200,200,5000,");
+    led_set_mode(beep, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
     led_start(beep);
-    led_set_mode(off_red, LOOP_PERMANENT,"200,200,200,5000,");
+    led_set_mode(off_red, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
     led_start(off_red);
 }
 void led_water_alarm_start(void)
@@ -290,8 +281,6 @@ int led_Init(void)
     led_set_mode(off_red, LOOP_PERMANENT, "200,200,");
     key_led = led_create(off_red_on, off_red_off, NULL);
     led_set_mode(key_led, 1, "200,1,");
-    loss_led = led_create(off_red_on, off_red_off, NULL);
-    led_set_mode(loss_led, LOOP_PERMANENT, "200,200,200,5000,");
     off_red_led_three = led_create(off_red_on, off_red_off, NULL);
     led_set_mode(off_red_led_three, 3, "200,200,");
 

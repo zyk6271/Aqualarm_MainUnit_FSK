@@ -107,7 +107,6 @@ void MasterLostPeakWarning(void *parameter)
     Now_Status = MasterLostPeak;
     WarUpload_GW(1,0,3,1);//掉落报警
     led_master_lost_start();
-    loss_led_start();
     LOG_I("MasterLostPeakWarning\r\n");
 }
 void MasterStatusChangeToDeAvtive(void)

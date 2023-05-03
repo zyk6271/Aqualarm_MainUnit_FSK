@@ -23,8 +23,8 @@
 
 extern uint8_t ValveStatus;
 
-ADC_HandleTypeDef hadc;
-DMA_HandleTypeDef hdma_adc;
+ADC_HandleTypeDef adc_handle;
+DMA_HandleTypeDef dma_handle;
 
 rt_thread_t ntc_work = RT_NULL;
 
@@ -45,26 +45,26 @@ static void MX_ADC_Init(void)
   /* USER CODE END ADC_Init 1 */
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
-  hadc.Instance = ADC;
-  hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
-  hadc.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  hadc.Init.LowPowerAutoWait = DISABLE;
-  hadc.Init.LowPowerAutoPowerOff = DISABLE;
-  hadc.Init.ContinuousConvMode = ENABLE;
-  hadc.Init.NbrOfConversion = 1;
-  hadc.Init.DiscontinuousConvMode = DISABLE;
-  hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc.Init.DMAContinuousRequests = ENABLE;
-  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
-  hadc.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_39CYCLES_5;
-  hadc.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_39CYCLES_5;
-  hadc.Init.OversamplingMode = DISABLE;
-  hadc.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
-  if (HAL_ADC_Init(&hadc) != HAL_OK)
+  adc_handle.Instance = ADC;
+  adc_handle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  adc_handle.Init.Resolution = ADC_RESOLUTION_12B;
+  adc_handle.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  adc_handle.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  adc_handle.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  adc_handle.Init.LowPowerAutoWait = DISABLE;
+  adc_handle.Init.LowPowerAutoPowerOff = DISABLE;
+  adc_handle.Init.ContinuousConvMode = ENABLE;
+  adc_handle.Init.NbrOfConversion = 1;
+  adc_handle.Init.DiscontinuousConvMode = DISABLE;
+  adc_handle.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  adc_handle.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  adc_handle.Init.DMAContinuousRequests = ENABLE;
+  adc_handle.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  adc_handle.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_39CYCLES_5;
+  adc_handle.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_39CYCLES_5;
+  adc_handle.Init.OversamplingMode = DISABLE;
+  adc_handle.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
+  if (HAL_ADC_Init(&adc_handle) != HAL_OK)
   {
     Error_Handler();
   }
@@ -74,7 +74,7 @@ static void MX_ADC_Init(void)
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
-  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  if (HAL_ADC_ConfigChannel(&adc_handle, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -106,7 +106,7 @@ void ADC1_IRQHandler(void)
   /* USER CODE BEGIN ADC1_IRQn 0 */
 
   /* USER CODE END ADC1_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc);
+  HAL_ADC_IRQHandler(&adc_handle);
   /* USER CODE BEGIN ADC1_IRQn 1 */
 
   /* USER CODE END ADC1_IRQn 1 */
@@ -162,7 +162,7 @@ void ADC_Init(void)
 {
     MX_DMA_Init();
     MX_ADC_Init();
-    HAL_ADC_Start_DMA(&hadc,(uint32_t*) &adc_value, 20);
+    HAL_ADC_Start_DMA(&adc_handle,(uint32_t*) &adc_value, 20);
     ntc_work = rt_thread_create("ntc_work", NTC_Work_Callback, RT_NULL, 2048, 15, 10);
     if(ntc_work != RT_NULL)rt_thread_startup(ntc_work);
 }

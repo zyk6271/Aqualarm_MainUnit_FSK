@@ -21,7 +21,7 @@
 #include "work.h"
 
 #define DBG_TAG "moto"
-#define DBG_LVL DBG_INFO
+#define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
 rt_timer_t Moto1_Timer_Act,Moto2_Timer_Act = RT_NULL;
@@ -104,9 +104,7 @@ void Moto_Close(uint8_t ActFlag)
         {
             ControlUpload_GW(1,0,1,0);
         }
-        rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
         rt_pin_write(Turn1,0);
-        rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
         rt_pin_write(Turn2,0);
         Delay_Timer_Stop();
         rt_timer_stop(Moto1_Timer_Act);
@@ -153,6 +151,7 @@ void Turn1_Timer_Callback(void *parameter)
     Key_IO_Init();
     WaterScan_IO_Init();
     rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
+    rt_pin_mode(Senor1,PIN_MODE_INPUT);
     rt_pin_write(Turn1,1);
     if(Turn1_Flag<2)
     {
@@ -180,6 +179,7 @@ void Turn2_Timer_Callback(void *parameter)
     Key_IO_Init();
     WaterScan_IO_Init();
     rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
+    rt_pin_mode(Senor2,PIN_MODE_INPUT);
     rt_pin_write(Turn2,1);
     if(Turn2_Flag<2)
     {
@@ -223,7 +223,7 @@ void Moto_Init(void)
     Moto2_Timer_Act = rt_timer_create("Moto2_Timer_Act", Moto2_Timer_Act_Callback, RT_NULL, 5000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
     Moto1_Timer_Detect = rt_timer_create("Moto1_Timer_Detect", Turn1_Timer_Callback, RT_NULL, 3000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
     Moto2_Timer_Detect = rt_timer_create("Moto2_Timer_Detect", Turn2_Timer_Callback, RT_NULL, 3000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
-    Moto_Detect_Timer = rt_timer_create("Moto_Detect", Moto_Detect_Timer_Callback, RT_NULL, 60000*5, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+    Moto_Detect_Timer = rt_timer_create("Moto_Detect", Moto_Detect_Timer_Callback, RT_NULL, 60*1000*5, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
     if(Flash_Get_SlaveAlarmFlag())
     {
         Warning_Enable_Num(2);

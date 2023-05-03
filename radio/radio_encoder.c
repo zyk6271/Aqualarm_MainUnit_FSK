@@ -23,7 +23,7 @@ rt_thread_t rf_encode_t = RT_NULL;
 
 extern uint32_t Gateway_ID;
 uint32_t Self_ID = 0;
-uint32_t Self_Default_Id = 10008889;
+uint32_t Self_Default_Id = 10008888;
 
 char radio_send_buf[255];
 
@@ -51,7 +51,7 @@ void GatewaySyncEnqueue(uint8_t ack,uint8_t command,uint32_t device_id,uint8_t r
         Send_Buf.Command = command;
         Send_Buf.Payload_ID = device_id;
         Send_Buf.Rssi = rssi;
-        Send_Buf.Bat = bat;
+        Send_Buf.Data = bat;
 
         rt_mq_send(rf_en_mq, &Send_Buf, sizeof(Radio_Normal_Format));
     }
@@ -64,9 +64,9 @@ void GatewayWarningEnqueue(uint8_t ack,uint32_t device_id,uint8_t rssi,uint8_t w
     {
         Send_Buf.Type = 2;
         Send_Buf.Ack = ack;
-        Send_Buf.Command = warn_id;
         Send_Buf.Payload_ID = device_id;
         Send_Buf.Rssi = rssi;
+        Send_Buf.Command = warn_id;
         Send_Buf.Data = value;
 
         rt_mq_send(rf_en_mq, &Send_Buf, sizeof(Radio_Normal_Format));
@@ -80,9 +80,9 @@ void GatewayControlEnqueue(uint8_t ack,uint32_t device_id,uint8_t rssi,uint8_t c
     {
         Send_Buf.Type = 3;
         Send_Buf.Ack = ack;
-        Send_Buf.Command = control;
         Send_Buf.Payload_ID = device_id;
         Send_Buf.Rssi = rssi;
+        Send_Buf.Command = control;
         Send_Buf.Data = value;
 
         rt_mq_send(rf_en_mq, &Send_Buf, sizeof(Radio_Normal_Format));
@@ -112,7 +112,7 @@ void SendPrepare(Radio_Normal_Format Send)
         wifi_communication_blink();
         break;
     case 2://Warn
-        rt_sprintf(radio_send_buf,"B{%02d,%08ld,%08ld,%08ld,%03d,%03d,%02d}B",Send.Ack,Gateway_ID,Self_ID,Send.Payload_ID,Send.Rssi,Send.Command,Send.Bat);
+        rt_sprintf(radio_send_buf,"B{%02d,%08ld,%08ld,%08ld,%03d,%03d,%02d}B",Send.Ack,Gateway_ID,Self_ID,Send.Payload_ID,Send.Rssi,Send.Command,Send.Data);
         wifi_communication_blink();
         break;
     case 3://Control
@@ -121,6 +121,7 @@ void SendPrepare(Radio_Normal_Format Send)
         break;
     }
 }
+
 void ack_refresh(void)
 {
     LOG_I("ack_refresh\r\n");

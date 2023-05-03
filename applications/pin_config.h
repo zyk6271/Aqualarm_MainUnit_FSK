@@ -20,17 +20,11 @@
 #define K0                      15
 #define K1                      45
 
-#define ANT_EXT                 8
-#define ANT_INT                 9
+#define ANT_EXT                 9
+#define ANT_INT                 8
 #define ANT_SW                  0
 
 #define BEEP_PIN                23
-#define LED0_PIN                1
-#define LED1_PIN                1
-#define LED2_PIN                1
-#define LED3_PIN                1
-#define LED4_PIN                1
-#define LED5_PIN                1
 #define Peak_ON                 5
 #define Peak_Loss               4
 #define Turn1                   12

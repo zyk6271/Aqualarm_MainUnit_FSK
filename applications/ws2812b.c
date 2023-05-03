@@ -15,7 +15,7 @@ const RGB_Color_TypeDef BLACK    = {0,0,0};
 数据代表一个LED，最后一行24个0代表RESET码*/
 
 uint32_t Pixel_Buf[Pixel_NUM + 1][24] = {0};
-TIM_HandleTypeDef htim16;
+TIM_HandleTypeDef tim16_handle;
 
 static void MX_TIM16_Init(void)
 {
@@ -30,18 +30,18 @@ static void MX_TIM16_Init(void)
   /* USER CODE BEGIN TIM16_Init 1 */
 
   /* USER CODE END TIM16_Init 1 */
-  htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 0;
-  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 59;
-  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim16.Init.RepetitionCounter = 0;
-  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  tim16_handle.Instance = TIM16;
+  tim16_handle.Init.Prescaler = 0;
+  tim16_handle.Init.CounterMode = TIM_COUNTERMODE_UP;
+  tim16_handle.Init.Period = 59;
+  tim16_handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  tim16_handle.Init.RepetitionCounter = 0;
+  tim16_handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&tim16_handle) != HAL_OK)
   {
     Error_Handler();
   }
-  if (HAL_TIM_PWM_Init(&htim16) != HAL_OK)
+  if (HAL_TIM_PWM_Init(&tim16_handle) != HAL_OK)
   {
     Error_Handler();
   }
@@ -52,7 +52,7 @@ static void MX_TIM16_Init(void)
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-  if (HAL_TIM_PWM_ConfigChannel(&htim16, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&tim16_handle, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -64,14 +64,14 @@ static void MX_TIM16_Init(void)
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.BreakFilter = 0;
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-  if (HAL_TIMEx_ConfigBreakDeadTime(&htim16, &sBreakDeadTimeConfig) != HAL_OK)
+  if (HAL_TIMEx_ConfigBreakDeadTime(&tim16_handle, &sBreakDeadTimeConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM16_Init 2 */
 
   /* USER CODE END TIM16_Init 2 */
-  HAL_TIM_MspPostInit(&htim16);
+  HAL_TIM_MspPostInit(&tim16_handle);
 
 }
 
@@ -81,9 +81,7 @@ void ws2812b_init(void)
     RGB_SetColor(0,BLACK);
     RGB_SetColor(1,BLACK);
     RGB_SetColor(2,BLACK);
-    //HAL_TIM_PWM_Start_DMA(&htim16, TIM_CHANNEL_1, (uint32_t *)Pixel_Buf,(Pixel_NUM + 1)*24);
 }
-MSH_CMD_EXPORT(ws2812b_init,ws2812b_init);
 void ws2812b_green(uint8_t id,uint8_t value)
 {
     if(value)
@@ -139,6 +137,6 @@ void RGB_SetColor(uint8_t LedId,RGB_Color_TypeDef Color)
 */
 void RGB_SendArray(void)
 {
-    HAL_TIM_PWM_Stop_DMA(&htim16, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start_DMA(&htim16, TIM_CHANNEL_1, (uint32_t *)Pixel_Buf,(Pixel_NUM + 1)*24);
+    HAL_TIM_PWM_Stop_DMA(&tim16_handle, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start_DMA(&tim16_handle, TIM_CHANNEL_1, (uint32_t *)Pixel_Buf,(Pixel_NUM + 1)*24);
 }

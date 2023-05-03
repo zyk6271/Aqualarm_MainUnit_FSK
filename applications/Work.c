@@ -44,7 +44,6 @@ void WarningWithPeak(uint8_t status)
             if (GetNowStatus() == Open || GetNowStatus() == Close || GetNowStatus() == MasterLostPeak)
             {
                 BackToNormal();
-                loss_led_stop();
             }
             break;
         case 1: //测水线掉落

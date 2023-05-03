@@ -39,21 +39,23 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-__WEAK ADC_HandleTypeDef hadc;
-__WEAK DMA_HandleTypeDef hdma_adc;
+ADC_HandleTypeDef hadc;
+DMA_HandleTypeDef hdma_adc;
 
-__WEAK CRC_HandleTypeDef hcrc;
+CRC_HandleTypeDef hcrc;
 
-__WEAK RTC_HandleTypeDef hrtc;
+IWDG_HandleTypeDef hiwdg;
 
-__WEAK SPI_HandleTypeDef hspi1;
+RTC_HandleTypeDef hrtc;
 
-__WEAK SUBGHZ_HandleTypeDef hsubghz;
+SPI_HandleTypeDef hspi1;
 
-__WEAK TIM_HandleTypeDef htim16;
-__WEAK DMA_HandleTypeDef hdma_tim16_ch1;
+SUBGHZ_HandleTypeDef hsubghz;
 
-__WEAK UART_HandleTypeDef huart2;
+TIM_HandleTypeDef htim16;
+DMA_HandleTypeDef hdma_tim16_ch1;
+
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -70,6 +72,7 @@ static void MX_SUBGHZ_Init(void);
 static void MX_CRC_Init(void);
 static void MX_RTC_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -115,6 +118,7 @@ __WEAK int main(void)
   MX_CRC_Init();
   MX_RTC_Init();
   MX_TIM16_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 //
   /* USER CODE END 2 */
@@ -266,6 +270,35 @@ static void MX_CRC_Init(void)
   /* USER CODE BEGIN CRC_Init 2 */
 ////
   /* USER CODE END CRC_Init 2 */
+
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Window = 4095;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
 
 }
 
