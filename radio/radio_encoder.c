@@ -23,7 +23,7 @@ rt_thread_t rf_encode_t = RT_NULL;
 
 extern uint32_t Gateway_ID;
 uint32_t Self_ID = 0;
-uint32_t Self_Default_Id = 10008888;
+uint32_t Self_Default_Id = 10000000;
 
 char radio_send_buf[255];
 
@@ -163,11 +163,9 @@ void rf_encode_entry(void *paramaeter)
 
 void RadioQueue_Init(void)
 {
-//    int *p;
-//    p=(int *)(0x0800FFF0);//这就是已知的地址，要强制类型转换
-//    Self_Id = *p;//从Flash加载ID
-
-    Self_ID = 0; //加载为空值
+    int *p;
+    p=(int *)(0x0803FFF0);//这就是已知的地址，要强制类型转换
+    Self_ID = *p;//从Flash加载ID
     if (Self_ID == 0xFFFFFFFF || Self_ID == 0)
     {
         Self_ID = Self_Default_Id;
