@@ -15,8 +15,10 @@
 
 //定义信号灯对象句柄
 static led_t *off_red = RT_NULL;
+static led_t *loss_red = RT_NULL;
 static led_t *on_green = RT_NULL;
 static led_t *beep = RT_NULL;
+static led_t *loss_beep = RT_NULL;
 static led_t *key_beep = RT_NULL;
 static led_t *learn_beep = RT_NULL;
 static led_t *key_led = RT_NULL;
@@ -184,10 +186,10 @@ void led_offline_start(void)
 }
 void led_master_lost_start(void)
 {
-    led_set_mode(beep, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
-    led_start(beep);
-    led_set_mode(off_red, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
-    led_start(off_red);
+    led_set_mode(loss_beep, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
+    led_start(loss_beep);
+    led_set_mode(loss_red, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
+    led_start(loss_red);
 }
 void led_water_alarm_start(void)
 {
@@ -198,6 +200,7 @@ void led_water_alarm_start(void)
 }
 void beep_stop(void)
 {
+    led_stop(loss_beep);
     led_stop(beep);
 }
 void key_down(void)
@@ -241,10 +244,10 @@ void led_factory_warn(void)
 void led_factory_normal(void)
 {
     led_stop(off_red);
-    led_set_mode(beep, LOOP_PERMANENT,"200,0,");
-    led_set_mode(on_green, LOOP_PERMANENT,"200,0,");
-    led_set_mode(wifi_green_led, LOOP_PERMANENT,"200,0,");
-    led_set_mode(wifi_red_led, LOOP_PERMANENT,"200,0,");
+    led_set_mode(beep, 1,"200,0,");
+    led_set_mode(on_green, 1,"200,0,");
+    led_set_mode(wifi_green_led, 1,"200,0,");
+    led_set_mode(wifi_red_led, 1,"200,0,");
     led_start(beep);
     led_start(on_green);
     led_start(wifi_green_led);
@@ -265,6 +268,7 @@ void led_valve_off(void)
 void led_warn_off(void)
 {
     led_stop(off_red);
+    led_stop(loss_red);
 }
 int led_Init(void)
 {
@@ -279,6 +283,8 @@ int led_Init(void)
 
     off_red = led_create(off_red_on, off_red_off, NULL);
     led_set_mode(off_red, LOOP_PERMANENT, "200,200,");
+    loss_red = led_create(off_red_on, off_red_off, NULL);
+    led_set_mode(loss_red, LOOP_PERMANENT, "200,200,");
     key_led = led_create(off_red_on, off_red_off, NULL);
     led_set_mode(key_led, 1, "200,1,");
     off_red_led_three = led_create(off_red_on, off_red_off, NULL);
@@ -289,6 +295,8 @@ int led_Init(void)
 
     beep = led_create(beep_on, beep_close, NULL);
     led_set_mode(beep, LOOP_PERMANENT, "200,200,");
+    loss_beep = led_create(beep_on, beep_close, NULL);
+    led_set_mode(loss_beep, LOOP_PERMANENT, "200,200,");
     key_beep = led_create(beep_on, beep_close, NULL);
     led_set_mode(key_beep, 1, "200,1,");
     beep_three = led_create(beep_on, beep_close, NULL);

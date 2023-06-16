@@ -236,7 +236,10 @@ uint8_t Detect_Learn(void)
     {
         return 1;
     }
-    else return 0;
+    else
+    {
+        return 0;
+    }
 }
 void BackToNormal(void)
 {

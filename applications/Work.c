@@ -39,7 +39,7 @@ void WarningWithPeak(uint8_t status)
     {
         switch (status)
         {
-        case 0: //测水线掉落恢复
+        case 0: //测水线恢复正常
             WarUpload_GW(1, 0, 3, 0); //掉落消除报警
             if (GetNowStatus() == Open || GetNowStatus() == Close || GetNowStatus() == MasterLostPeak)
             {
@@ -48,7 +48,6 @@ void WarningWithPeak(uint8_t status)
             break;
         case 1: //测水线掉落
             Warning_Enable_Num(3);
-            LOG_D("MasterLostPeakWarning\r\n");
             break;
         case 2: //测水线短路
             Warning_Enable_Num(4);
@@ -110,7 +109,9 @@ void WaterScan_Callback(void *parameter)
                 LOG_W("Peak_ON is active\r\n");
             }
             else
+            {
                 WarningNowStatus = 0; //状态正常
+            }
         }
         if (WarningNowStatus != WarningPastStatus)
         {
@@ -155,6 +156,15 @@ void WaterScan_Callback(void *parameter)
                     WarningWithPeak(0);
                     WarningPastStatus = WarningNowStatus;
                     WarningStatus = 1 << 4;
+                }
+            }
+            else if (WarningPastStatus == 1 && WarningNowStatus == 2)
+            {
+                if (WarningStatus != 1 << 3)
+                {
+                    WarningWithPeak(2);
+                    WarningPastStatus = WarningNowStatus;
+                    WarningStatus = 1 << 3;
                 }
             }
         }
