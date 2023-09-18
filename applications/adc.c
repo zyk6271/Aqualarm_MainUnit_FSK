@@ -132,7 +132,6 @@ uint8_t NTC_State_read(void)
 }
 void NTC_Work_Callback(void *parameter)
 {
-    LOG_D("NTC With ADC is Init Success\r\n");
     while(1)
     {
         ADC_Voltage_Calc();

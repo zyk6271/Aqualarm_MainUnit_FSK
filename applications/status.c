@@ -21,13 +21,12 @@
 #include "gateway.h"
 
 #define DBG_TAG "status"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 enum Device_Status Now_Status = Close;
 
 extern uint8_t ValveStatus;
-extern uint32_t Self_Id;
 
 WariningEvent NowStatusEvent;
 WariningEvent SlaverLowPowerEvent;
@@ -80,39 +79,38 @@ void Warning_Disable(void)
     NowStatusEvent.last_id = 0;
     NowStatusEvent.priority = 0;
     BackToNormal();
-    LOG_I("Warning is Disable\r\n");
 }
 void SlaverLowBatteryWarning(void *parameter)
 {
     led_slave_low_start();
     //Now_Status = SlaverLowPower;
-    LOG_I("SlaverLowBatteryWarning\r\n");
+    LOG_W("SlaverLowBatteryWarning\r\n");
 }
 void SlaverUltraLowBatteryWarning(void *parameter)
 {
     Moto_Close(OtherOff);
     led_slave_low_start();
     Now_Status = SlaverUltraLowPower;
-    LOG_I("SlaverUltraLowBatteryWarning\r\n");
+    LOG_W("SlaverUltraLowBatteryWarning\r\n");
 }
 void SlaverWaterAlarmWarning(void *parameter)
 {
     Moto_Close(OtherOff);
     led_water_alarm_start();
     Now_Status = SlaverWaterAlarmActive;
-    LOG_I("SlaverWaterAlarmWarning\r\n");
+    LOG_W("SlaverWaterAlarmWarning\r\n");
 }
 void MasterLostPeakWarning(void *parameter)
 {
     Now_Status = MasterLostPeak;
     WarUpload_GW(1,0,3,1);//掉落报警
     led_master_lost_start();
-    LOG_I("MasterLostPeakWarning\r\n");
+    LOG_W("MasterLostPeakWarning\r\n");
 }
 void MasterStatusChangeToDeAvtive(void)
 {
     Now_Status = MasterWaterAlarmDeActive;
-    LOG_I("MasterStatusChangeToDeAvtive\r\n");
+    LOG_W("MasterStatusChangeToDeAvtive\r\n");
 }
 void MasterWaterAlarmWarning(void *parameter)
 {
@@ -120,7 +118,7 @@ void MasterWaterAlarmWarning(void *parameter)
     WarUpload_GW(1,0,1,1);//主控水警
     led_water_alarm_start();
     Now_Status = MasterWaterAlarmActive;
-    LOG_I("MasterWaterAlarmWarning\r\n");
+    LOG_W("MasterWaterAlarmWarning\r\n");
 }
 void NTCWarningEvent_Callback(void *parameter)
 {
@@ -128,7 +126,7 @@ void NTCWarningEvent_Callback(void *parameter)
     WarUpload_GW(1,0,8,1);//NTC报警
     led_ntc_alarm();
     Now_Status = NTCWarning;
-    LOG_I("NTCWarning\r\n");
+    LOG_W("NTCWarning\r\n");
 }
 void Delay_Timer_Callback(void *parameter)
 {
@@ -187,14 +185,14 @@ void Moto1FailCallback(void *parameter)
     WarUpload_GW(1,0,2,2);//MOTO1报警
     led_moto_fail_start();
     Now_Status = MotoFail;
-    LOG_I("MotoFail\r\n");
+    LOG_W("MotoFail\r\n");
 }
 void Moto2FailCallback(void *parameter)
 {
     WarUpload_GW(1,0,2,3);//MOTO2报警
     led_moto_fail_start();
     Now_Status = MotoFail;
-    LOG_I("MotoFail\r\n");
+    LOG_W("MotoFail\r\n");
 }
 void OfflineDisableWarning(void)
 {
@@ -255,10 +253,12 @@ void BackToNormal(void)
         Now_Status = Close;
     }
 }
+
 uint8_t GetNowStatus(void)
 {
     return Now_Status;
 }
+
 void SetNowStatus(uint8_t value)
 {
     Now_Status = value;

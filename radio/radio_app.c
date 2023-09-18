@@ -14,7 +14,7 @@
 #include "radio_encoder.h"
 
 #define DBG_TAG "RADIO_APP"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 CRC_HandleTypeDef crchandle;
@@ -86,7 +86,7 @@ static void OnRxDone(uint8_t *src_payload, uint16_t size, int16_t rssi, int8_t L
     }
     else
     {
-        LOG_E("RSSI %d,Calc_CRC is %04X,src_CRC is %04X\r\n",rssi,calc_crc,src_crc);
+        LOG_D("RSSI %d,Calc_CRC is %04X,src_CRC is %04X\r\n",rssi,calc_crc,src_crc);
     }
 }
 static void OnTxTimeout(void)

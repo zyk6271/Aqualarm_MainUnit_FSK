@@ -21,7 +21,7 @@
 #include "work.h"
 
 #define DBG_TAG "moto"
-#define DBG_LVL DBG_LOG
+#define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
 rt_timer_t Moto1_Timer_Act,Moto2_Timer_Act = RT_NULL;
@@ -40,10 +40,9 @@ extern Device_Info Global_Device;
 
 void Moto_InitOpen(uint8_t ActFlag)
 {
-    LOG_I("Moto Open Init Now is is %d , act is %d\r\n",Global_Device.LastFlag,ActFlag);
+    LOG_D("Moto Open Init Now is is %d , act is %d\r\n",Global_Device.LastFlag,ActFlag);
     if((Global_Device.LastFlag == OtherOff && ActFlag == OtherOpen)||(Global_Device.LastFlag != OtherOff))
     {
-        LOG_D("Moto is Open\r\n");
         Now_Status = Open;
         led_valve_on();
         ValveStatus=1;
@@ -65,10 +64,8 @@ void Moto_InitOpen(uint8_t ActFlag)
 }
 void Moto_Open(uint8_t ActFlag)
 {
-    LOG_I("Moto Open Now is is %d , act is %d\r\n",Global_Device.LastFlag,ActFlag);
     if((Global_Device.LastFlag == OtherOff && ActFlag == OtherOpen)||(Global_Device.LastFlag != OtherOff))
     {
-        LOG_D("Moto is Open\r\n");
         Now_Status = Open;
         led_valve_on();
         ValveStatus=1;
@@ -91,10 +88,8 @@ void Moto_Open(uint8_t ActFlag)
 }
 void Moto_Close(uint8_t ActFlag)
 {
-    LOG_I("Moto Close Now is is %d , act is %d\r\n",Global_Device.LastFlag,ActFlag);
     if(Global_Device.LastFlag != OtherOff )
     {
-        LOG_D("Moto is Close\r\n");
         Now_Status = Close;
         led_valve_off();
         ValveStatus=0;
@@ -227,7 +222,7 @@ void Moto_Init(void)
     if(Flash_Get_SlaveAlarmFlag())
     {
         Warning_Enable_Num(2);
-        LOG_I("Moto is Init Fail,Last is Slaver Alarm\r\n");
+        LOG_W("Moto is Init Fail,Last is Slaver Alarm\r\n");
         return;
     }
     if(Global_Device.LastFlag != OtherOff)

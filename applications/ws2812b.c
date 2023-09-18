@@ -118,8 +118,7 @@ void ws2812b_blue(uint8_t id,uint8_t value)
     }
 }
 /*
-功能：设定单个RGB LED的颜色，把结构体中RGB的24BIT转换为0码和1码
-参数：LedId为LED序号，Color：定义的颜色结构体
+    功能：设定单个RGB LED的颜色，把结构体中RGB的24BIT转换为0码和1码
 */
 void RGB_SetColor(uint8_t LedId,RGB_Color_TypeDef Color)
 {
@@ -131,9 +130,7 @@ void RGB_SetColor(uint8_t LedId,RGB_Color_TypeDef Color)
 }
 
 /*
-功能：发送数组
-参数：(&htim1)定时器1，(TIM_CHANNEL_1)通道1，((uint32_t *)Pixel_Buf)待发送数组，
-            (Pixel_NUM+1)*24)发送个数，数组行列相乘
+    功能：发送数组
 */
 void RGB_SendArray(void)
 {

@@ -23,8 +23,8 @@
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
 
+rt_spi_flash_device_t w25q16;
 Device_Info Global_Device={0};
-rt_spi_flash_device_t fm25q16;
 char read_value_temp[64]={0};
 
 int Flash_Init(void)
@@ -32,8 +32,8 @@ int Flash_Init(void)
     rt_err_t status;
     extern rt_spi_flash_device_t rt_sfud_flash_probe(const char *spi_flash_dev_name, const char *spi_dev_name);
     rt_hw_spi_device_attach("spi1", "spi10", GPIOB, GPIO_PIN_6);
-    fm25q16 = rt_sfud_flash_probe("norflash0", "spi10");
-    if (RT_NULL == fm25q16)
+    w25q16 = rt_sfud_flash_probe("norflash0", "spi10");
+    if (RT_NULL == w25q16)
     {
         LOG_E("sfud fail\r\n");
         return RT_ERROR;
@@ -460,7 +460,6 @@ uint32_t GetDoorID(void)
     }
     else
     {
-        LOG_W("Not Include Door Device ID\r\n");
         return 0;
     }
 }
@@ -490,7 +489,6 @@ uint32_t GetGatewayID(void)
     }
     else
     {
-        LOG_W("Not Include Gateway Device ID\r\n");
         return 0;
     }
 }
@@ -561,13 +559,12 @@ uint8_t Update_Device_Rssi(uint32_t Device_ID,int rssi)//更新Rssi
             {
                 Global_Device.Rssi[num] = rssi_temp;
                 Device_RssiChange(Device_ID,Global_Device.Rssi[num]);
-                LOG_I("Device rssi %d is Write to %d",Global_Device.Rssi[num],Global_Device.ID[num]);
+                LOG_D("Device rssi %d is Write to %d",Global_Device.Rssi[num],Global_Device.ID[num]);
             }
             return RT_EOK;
         }
         num--;
     }
-    LOG_E("Device Rssi %d is Increase Fail",Global_Device.ID[num]);
     return RT_ERROR;
 }
 uint8_t Clear_Device_Time(uint32_t Device_ID)//更新时间戳为0
@@ -717,20 +714,7 @@ void Offline_React(uint32_t ID)
     }
     LOG_D("Detect_All_Time OK\r\n");
 }
-uint8_t AckCheck(uint32_t device)
-{
-    uint16_t num = Global_Device.Num;
-    if(!num)return 0;
-    while(num)
-    {
-        if(Global_Device.ID[num]==device)
-        {
-            return Global_Device.Reponse[num];
-        }
-        num--;
-    }
-    return 0;
-}
+
 void LoadDevice2Memory(void)//数据载入到内存中
 {
     memset(&Global_Device,0,sizeof(Global_Device));
@@ -750,7 +734,7 @@ void LoadDevice2Memory(void)//数据载入到内存中
     Global_Device.DoorNum = Flash_Get_Key_Value(88888888);
     Global_Device.GatewayNum = Flash_Get_Key_Value(88887777);
     Global_Device.LastFlag = Flash_Get_Moto_Flag();
-    LOG_I("Num is %d",Global_Device.Num);
+    LOG_I("Total %d devices in flash",Global_Device.Num);
 }
 void DeleteAllDevice(void)//数据载入到内存中
 {

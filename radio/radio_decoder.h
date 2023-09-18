@@ -12,7 +12,6 @@
 
 typedef struct
 {
-    int ack;
     long Target_ID;
     long From_ID;
     long Payload_ID;

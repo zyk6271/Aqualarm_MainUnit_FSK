@@ -186,9 +186,9 @@ void led_offline_start(void)
 }
 void led_master_lost_start(void)
 {
-    led_set_mode(loss_beep, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
+    led_set_mode(loss_beep, LOOP_PERMANENT,"200,200,200,5000,");
     led_start(loss_beep);
-    led_set_mode(loss_red, LOOP_PERMANENT,"0,5000,200,200,200,5000,");
+    led_set_mode(loss_red, LOOP_PERMANENT,"200,200,200,5000,");
     led_start(loss_red);
 }
 void led_water_alarm_start(void)

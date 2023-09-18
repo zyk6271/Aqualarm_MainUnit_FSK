@@ -28,7 +28,7 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-extern uint32_t Self_ID;
+extern uint32_t RadioID;
 uint8_t Learn_Flag=0;
 uint8_t Last_Close_Flag=0;
 
@@ -67,7 +67,6 @@ void Start_Learn_Key(void)
     Learn_Flag = 1;
     led_learn_start();
     rt_timer_start(Learn_Timer);
-    LOG_D("Learn timer is start\r\n");
 }
 void Start_Learn(void)
 {
@@ -77,11 +76,10 @@ void Start_Learn(void)
         Learn_Flag = 1;
         led_learn_start();
         rt_timer_start(Learn_Timer);
-        LOG_D("Learn timer is start\r\n");
     }
     else
     {
-        LOG_D("Now in Warining Mode\r\n");
+        LOG_W("Start_Learn fail,because in warining mode\r\n");
     }
 }
 
@@ -90,7 +88,6 @@ void Stop_Learn(void)
     Learn_Flag = 0;
     Warning_Disable();//消警
     led_notice_once();
-    LOG_D("Learn timer is stop\r\n");
     if(Get_GatewayNew())
     {
         Set_GatewayNew(0);
@@ -182,10 +179,10 @@ void GatewayDataSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
     Message_Format Rx_message;
     if(rx_buffer[rx_len]=='G')
     {
-        sscanf((const char *)&rx_buffer[1],"G{%ld,%ld,%ld,%d,%d,%d}G",&Rx_message.Target_ID,&Rx_message.From_ID,&Rx_message.Payload_ID,&Rx_message.Counter,&Rx_message.Command,&Rx_message.Data);
-        if(Rx_message.Target_ID == Self_ID && Check_Valid(Rx_message.From_ID) == RT_EOK)
+        rt_sscanf((const char *)&rx_buffer[1],"G{%d,%d,%d,%d,%d,%d}G",&Rx_message.Target_ID,&Rx_message.From_ID,&Rx_message.Payload_ID,&Rx_message.Counter,&Rx_message.Command,&Rx_message.Data);
+        if(Rx_message.Target_ID == RadioID && Check_Valid(Rx_message.From_ID) == RT_EOK)
         {
-            LOG_D("GatewayDataSolve is %s,RSSI is %d\r\n",rx_buffer,rssi);
+            LOG_D("GatewayDataSolve from:%d,command:%d,data:%d,rssi:%d\r\n",Rx_message.From_ID,Rx_message.Command,Rx_message.Data,rssi);
             Gateway_Heart_Refresh(Rx_message.From_ID);
             switch(Rx_message.Command)
             {
@@ -198,17 +195,17 @@ void GatewayDataSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
                     if(Rx_message.Data)
                     {
                         Remote_Open();
-                        ControlUpload_GW(1,Self_ID,2,ValveStatus);
+                        ControlUpload_GW(1,RadioID,2,ValveStatus);
                     }
                     else
                     {
                         Remote_Close();
-                        ControlUpload_GW(1,Self_ID,2,ValveStatus);
+                        ControlUpload_GW(1,RadioID,2,ValveStatus);
                     }
                 }
                 else
                 {
-                    ControlUpload_GW(0,Self_ID,2,3);
+                    ControlUpload_GW(0,RadioID,2,3);
                 }
                 break;
             case 3://心跳应答
@@ -324,7 +321,7 @@ void DataSolve(Message_Format buf)
     case 5://开机
         if((GetNowStatus()==Open||GetNowStatus()==Close))
         {
-            LOG_D("Pwr On From %ld\r\n",buf.From_ID);
+            LOG_D("Remote valve open from %ld\r\n",buf.From_ID);
             RadioEnqueue(buf.From_ID,buf.Counter,5,1);
             Moto_Open(OtherOpen);
             Last_Close_Flag=0;
@@ -332,7 +329,7 @@ void DataSolve(Message_Format buf)
         }
         else
         {
-            LOG_D("Pwr On From %ld On Warning\r\n",buf.From_ID);
+            LOG_D("Remote valve open from %ld fail because device is warning\r\n",buf.From_ID);
             RadioEnqueue(buf.From_ID,buf.Counter,5,2);
         }
         if(buf.From_ID == GetDoorID())
@@ -356,7 +353,7 @@ void DataSolve(Message_Format buf)
         }
         if(GetNowStatus()==Open||GetNowStatus()==Close)
         {
-            LOG_D("Pwr Off From %ld\r\n",buf.From_ID);
+            LOG_D("Remote valve close from %ld\r\n",buf.From_ID);
             Warning_Disable();
             Last_Close_Flag=1;
             Moto_Close(OtherOff);
@@ -372,7 +369,7 @@ void DataSolve(Message_Format buf)
         }
         break;
     case 8://延迟
-        LOG_I("Delay Open %d From %ld\r\n",buf.Data,buf.From_ID);
+        LOG_I("Valve delay open %d from %ld\r\n",buf.Data,buf.From_ID);
         RadioEnqueue(buf.From_ID,buf.Counter,8,buf.Data);
         if(buf.Data)
         {
@@ -387,7 +384,7 @@ void DataSolve(Message_Format buf)
         }
         break;
     case 9://终端测水线掉落
-        LOG_I("Slave Lost %d From %ld\r\n",buf.Data,buf.From_ID);
+        LOG_I("Slave sensor wire lost %d from %ld\r\n",buf.Data,buf.From_ID);
         RadioEnqueue(buf.From_ID,buf.Counter,9,buf.Data);
         WarUpload_GW(1,buf.From_ID,9,buf.Data);
         break;
@@ -400,12 +397,10 @@ void NormalSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
     Message_Format Rx_message = {0};
     if(rx_buffer[rx_len]==0x0A && rx_buffer[rx_len-1]==0x0D)
     {
-        rt_enter_critical();
-        sscanf((const char *)&rx_buffer[1],"{%ld,%ld,%d,%d,%d}",&Rx_message.Target_ID,&Rx_message.From_ID,&Rx_message.Counter,&Rx_message.Command,&Rx_message.Data);
-        rt_exit_critical();
-        if(Rx_message.Target_ID==Self_ID ||Rx_message.Target_ID==99999999)
+        rt_sscanf((const char *)&rx_buffer[1],"{%d,%d,%d,%d,%d}",&Rx_message.Target_ID,&Rx_message.From_ID,&Rx_message.Counter,&Rx_message.Command,&Rx_message.Data);
+        if(Rx_message.Target_ID==RadioID ||Rx_message.Target_ID==99999999)
         {
-            LOG_D("NormalSolve is %s,RSSI is %d\r\n",rx_buffer,rssi);
+            LOG_D("NormalSolve from:%d,command:%d,data:%d,rssi:%d\r\n",Rx_message.From_ID,Rx_message.Command,Rx_message.Data,rssi);
             if(Learn_Flag)
             {
                 Update_Device_Rssi(Rx_message.From_ID,rssi);
