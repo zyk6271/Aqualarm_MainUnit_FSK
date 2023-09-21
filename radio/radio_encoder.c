@@ -18,7 +18,9 @@
 #include <rtdbg.h>
 
 static rt_mq_t rf_en_mq;
-static struct rt_completion rf_ack;
+static struct rt_completion rf_ack_sem;
+static struct rt_completion rf_txdone_sem;
+
 rt_thread_t rf_encode_t = RT_NULL;
 
 extern uint32_t Gateway_ID;
@@ -32,12 +34,13 @@ void RadioEnqueue(uint32_t Taget_Id, uint8_t Counter, uint8_t Command, uint8_t D
     Radio_Normal_Format Send_Buf = {0};
 
     Send_Buf.Type = 0;
+    Send_Buf.Ack = 0;
     Send_Buf.Taget_ID = Taget_Id;
     Send_Buf.Counter = Counter;
     Send_Buf.Command = Command;
     Send_Buf.Data = Data;
 
-    rt_mq_send(rf_en_mq, &Send_Buf, sizeof(Radio_Normal_Format));
+    rt_mq_urgent(rf_en_mq, &Send_Buf, sizeof(Radio_Normal_Format));
 }
 
 void GatewaySyncEnqueue(uint8_t ack,uint8_t command,uint32_t device_id,uint8_t rssi,uint8_t bat)
@@ -96,6 +99,7 @@ void SendPrepare(Radio_Normal_Format Send)
     switch(Send.Type)
     {
     case 0:
+        LOG_D("RF_Send Node to:%d,command:%d,data:%d\r\n",Send.Taget_ID,Send.Command,Send.Data);
         Send.Counter++ <= 255 ? Send.Counter : 0;
         rt_sprintf(radio_send_buf, "{%08ld,%08ld,%03d,%02d,%d}", Send.Taget_ID, RadioID, Send.Counter, Send.Command, Send.Data);
         for (uint8_t i = 0; i < 28; i++)
@@ -108,24 +112,31 @@ void SendPrepare(Radio_Normal_Format Send)
         radio_send_buf[31] = '\n';
         break;
     case 1://Sync
+        LOG_D("RF_Send Sync to:%d,PayloadID:%d,Command:%d,Data:%d\r\n",Gateway_ID,Send.Payload_ID,Send.Command,Send.Data);
         rt_sprintf(radio_send_buf,"A{%02d,%02d,%08ld,%08ld,%08ld,%03d,%02d}A",Send.Ack,Send.Command,Gateway_ID,RadioID,Send.Payload_ID,Send.Rssi,Send.Data);
         wifi_communication_blink();
         break;
     case 2://Warn
+        LOG_D("RF_Send Warn to:%d,PayloadID:%d,Command:%d,Data:%d\r\n",Gateway_ID,Send.Payload_ID,Send.Command,Send.Data);
         rt_sprintf(radio_send_buf,"B{%02d,%08ld,%08ld,%08ld,%03d,%03d,%02d}B",Send.Ack,Gateway_ID,RadioID,Send.Payload_ID,Send.Rssi,Send.Command,Send.Data);
         wifi_communication_blink();
         break;
     case 3://Control
+        LOG_D("RF_Send Control to:%d,PayloadID:%d,Command:%d,Data:%d\r\n",Gateway_ID,Send.Payload_ID,Send.Command,Send.Data);
         rt_sprintf(radio_send_buf,"C{%02d,%08ld,%08ld,%08ld,%03d,%03d,%02d}C",Send.Ack,Gateway_ID,RadioID,Send.Payload_ID,Send.Rssi,Send.Command,Send.Data);
         wifi_communication_blink();
         break;
     }
 }
 
-void ack_refresh(void)
+void rf_recvack_callback(void)
 {
-    LOG_I("ack_refresh\r\n");
-    rt_completion_done(&rf_ack);
+    rt_completion_done(&rf_ack_sem);
+}
+
+void rf_txdone_callback(void)
+{
+    rt_completion_done(&rf_txdone_sem);
 }
 
 void rf_encode_entry(void *paramaeter)
@@ -135,18 +146,44 @@ void rf_encode_entry(void *paramaeter)
     {
         if (rt_mq_recv(rf_en_mq,&Send_Data, sizeof(Radio_Normal_Format), RT_WAITING_FOREVER) == RT_EOK)
         {
-            rt_completion_init(&rf_ack);
+            /*
+             * Clear RF Flag
+             */
+            rt_completion_init(&rf_ack_sem);
+            rt_completion_init(&rf_txdone_sem);
+            /*
+             * Start RF Send
+             */
             SendPrepare(Send_Data);
-            LOG_D("RF_Send to:%d,command:%d,data:%d\r\n",Send_Data.Taget_ID,Send_Data.Command,Send_Data.Data);
             RF_Send(radio_send_buf, rt_strlen(radio_send_buf));
+            /*
+             * Wait RF TxDone
+             */
+            rt_completion_wait(&rf_txdone_sem,200);
             if(Send_Data.Ack)
             {
-                for(uint8_t i = 0;i<3;i++)
+                for(uint8_t i = 1; i <= 3; i++)
                 {
-                    LOG_D("RF_Send retry num %d\r\n",i);
-                    if(rt_completion_wait(&rf_ack, 500) != RT_EOK)
+                    /*
+                     * Wait RF Reponse
+                     */
+                    if(rt_completion_wait(&rf_ack_sem, 400) != RT_EOK)
                     {
+                        LOG_D("RF_Send retry num %d\r\n",i);
+                        /*
+                         * Clear RF Flag
+                         */
+                        rt_completion_init(&rf_ack_sem);
+                        rt_completion_init(&rf_txdone_sem);
+                        /*
+                         * Start RF Send
+                         */
+                        SendPrepare(Send_Data);
                         RF_Send(radio_send_buf, rt_strlen(radio_send_buf));
+                        /*
+                         * Wait RF TxDone
+                         */
+                        rt_completion_wait(&rf_txdone_sem,200);
                     }
                     else
                     {
@@ -154,19 +191,9 @@ void rf_encode_entry(void *paramaeter)
                     }
                 }
             }
-            else
-            {
-                rt_thread_mdelay(400);
-            }
         }
     }
 }
-
-void Print_RadioID(void)
-{
-    LOG_I("Radio ID is %d\r\n", RadioID);
-}
-MSH_CMD_EXPORT(Print_RadioID,Print_RadioID);
 
 void RadioQueue_Init(void)
 {
@@ -175,7 +202,7 @@ void RadioQueue_Init(void)
     {
         RadioID = Self_Default_Id;
     }
-    Print_RadioID();
+    LOG_I("Radio ID is %d\r\n", RadioID);
 
     rf_en_mq = rt_mq_create("rf_en_mq", sizeof(Radio_Normal_Format), 10, RT_IPC_FLAG_PRIO);
     rf_encode_t = rt_thread_create("radio_send", rf_encode_entry, RT_NULL, 1024, 9, 10);

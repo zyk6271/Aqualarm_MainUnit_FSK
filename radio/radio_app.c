@@ -48,6 +48,8 @@ static void OnTxDone(void)
 
     Radio.SetMaxPayloadLength(MODEM_FSK, Frame_Size);
     Radio.Rx(0);
+
+    rf_txdone_callback();
 }
 void RF_Send(char *payload,int size)
 {
