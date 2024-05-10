@@ -84,6 +84,7 @@ void Key_Reponse_Callback(void *parameter)
                 beep_three_times();
                 break;
             case SlaverWaterAlarmActive:
+                beep_three_times();
                 break;
             case MasterLostPeak:
                 key_down();
