@@ -42,15 +42,18 @@ static const unsigned char BitReverseTable256[] =
   0x07, 0x87, 0x47, 0xC7, 0x27, 0xA7, 0x67, 0xE7, 0x17, 0x97, 0x57, 0xD7, 0x37, 0xB7, 0x77, 0xF7,
   0x0F, 0x8F, 0x4F, 0xCF, 0x2F, 0xAF, 0x6F, 0xEF, 0x1F, 0x9F, 0x5F, 0xDF, 0x3F, 0xBF, 0x7F, 0xFF
 };
-static void OnTxDone(void)
+
+void radio_recv_start(void)
 {
-    LOG_D("OnTxDone\r\n");
-
+    Radio.SetChannel( RF_FREQUENCY );
+    Radio.SetRxConfig(MODEM_FSK, FSK_BANDWIDTH, FSK_DATARATE,
+                    0, FSK_AFC_BANDWIDTH, FSK_PREAMBLE_LENGTH,
+                    0, FSK_FIX_LENGTH_PAYLOAD_ON, 0, false,
+                    0, 0, false, true);
     Radio.SetMaxPayloadLength(MODEM_FSK, Frame_Size);
-    Radio.Rx(0);
-
-    rf_txdone_callback();
+    Radio.Rx(4*60*1000);
 }
+
 void RF_Send(char *payload,int size)
 {
     rt_memset(tx_convert_buf, 0, sizeof(tx_convert_buf));
@@ -67,8 +70,18 @@ void RF_Send(char *payload,int size)
     }
     Radio.Send(tx_convert_buf, send_size);
 }
+
+static void OnTxDone(void)
+{
+    LOG_D("OnTxDone");
+    radio_recv_start();
+    rf_txdone_callback();
+}
+
 static void OnRxDone(uint8_t *src_payload, uint16_t size, int16_t rssi, int8_t LoraSnr_FskCfo)
 {
+    LOG_D("OnRxDone");
+    radio_recv_start();
     uint16_t real_size = BitReverseTable256[src_payload[0]];
     if(real_size > size)
     {
@@ -94,14 +107,19 @@ static void OnRxDone(uint8_t *src_payload, uint16_t size, int16_t rssi, int8_t L
 static void OnTxTimeout(void)
 {
     LOG_W("OnTxTimeout\r\n");
+    radio_recv_start();
 }
+
 static void OnRxTimeout(void)
 {
     LOG_W("OnRxTimeout\r\n");
+    radio_recv_start();
 }
+
 static void OnRxError(void)
 {
     LOG_W("OnRxError\r\n");
+    radio_recv_start();
 }
 
 void RF_Init(void)
@@ -145,5 +163,5 @@ void RF_Init(void)
 
     Radio.SetMaxPayloadLength(MODEM_FSK, Frame_Size);
 
-    Radio.Rx(0);
+    Radio.Rx(4*60*1000);
 }
