@@ -185,6 +185,15 @@ void OfflineWarning(void *parameter)
         LOG_I("Already OfflineWarning Now\r\n");
     }
 }
+
+void valvefail_warning_disable(void)
+{
+    if(Now_Status == MotoFail)
+    {
+        Warning_Disable();
+    }
+}
+
 void Moto1FailCallback(void *parameter)
 {
     WarUpload_GW(1,0,2,2);//MOTO1报警

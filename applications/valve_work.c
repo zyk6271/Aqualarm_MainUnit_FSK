@@ -187,6 +187,7 @@ uint8_t valve_check_left_final_timer_callback(void *parameter)
         if(valve_right_warning_result == 0)
         {
             valve_valid = 1;
+            valvefail_warning_disable();
         }
         WarUpload_GW(1,0,2,0);//MOTO1解除报警
         rt_kprintf("valve_left_check success\r\n");
@@ -208,6 +209,7 @@ uint8_t valve_check_right_final_timer_callback(void *parameter)
         if(valve_left_warning_result == 0)
         {
             valve_valid = 1;
+            valvefail_warning_disable();
         }
         WarUpload_GW(1,0,2,1);//MOTO2解除报警
         rt_kprintf("valve_right_check success\r\n");

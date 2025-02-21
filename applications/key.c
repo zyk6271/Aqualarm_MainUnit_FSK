@@ -62,7 +62,10 @@ void Key_Reponse_Callback(void *parameter)
             switch(GetNowStatus())
             {
             case Close:
-                valve_open();
+                if(valve_open() == RT_EOK)//valve open success
+                {
+                    ControlUpload_GW(1,0,1,1);
+                }
                 break;
             case Open:
                 beep_once();
@@ -122,7 +125,10 @@ void Key_Reponse_Callback(void *parameter)
                     LOG_D("Valve Already Close With OFF\r\n");
                     break;
                 case Open:
-                    valve_close();
+                    if(valve_close() == RT_EOK)//valve close success
+                    {
+                        ControlUpload_GW(1,0,1,0);
+                    }
                     break;
                 case SlaverLowPower:
                     break;
