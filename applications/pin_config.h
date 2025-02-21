@@ -17,20 +17,20 @@
 #define TCXO_PWR_PIN                    16
 
 //BASIC
-#define K0                      15
-#define K1                      45
+#define K0                              15
+#define K1                              45
 
-#define ANT_EXT                 9
-#define ANT_INT                 8
-#define ANT_SW                  0
+#define ANT_EXT                         9
+#define ANT_INT                         8
+#define ANT_SW                          0
 
-#define BEEP_PIN                23
-#define Peak_ON                 5
-#define Peak_Loss               4
-#define Turn1                   12
-#define Turn2                   10
-#define Senor1                  11
-#define Senor2                  28
-#define TEST                    1
+#define BEEP_PIN                        23
+#define Peak_ON                         5
+#define Peak_Loss                       4
+#define MOTO_LEFT_CONTROL_PIN           12
+#define MOTO_RIGHT_CONTROL_PIN          10
+#define MOTO_LEFT_HALL_PIN              11
+#define MOTO_RIGHT_HALL_PIN             28
+#define TEST                            1
 
 #endif /* APPLICATIONS_PIN_CONFIG_H_ */

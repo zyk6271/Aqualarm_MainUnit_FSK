@@ -3,7 +3,6 @@
 #include "pin_config.h"
 #include "rtc.h"
 #include "Flashwork.h"
-#include "moto.h"
 #include "board.h"
 
 #define DBG_TAG "RTC"
@@ -26,7 +25,7 @@ void RTC_Timer_Entry(void *parameter)
         {
             if(RTC_Hours%120==0)
             {
-                Moto_Detect();
+                valve_check();
             }
             if(RTC_Counter<24)
             {

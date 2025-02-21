@@ -17,7 +17,6 @@
 #include "stdio.h"
 #include "work.h"
 #include "status.h"
-#include "moto.h"
 #include "led.h"
 #include "key.h"
 #include "pin_config.h"
@@ -30,7 +29,6 @@
 
 extern uint32_t RadioID;
 uint8_t Learn_Flag=0;
-uint8_t Last_Close_Flag=0;
 
 uint8_t GatewayNew_Flag = 0;
 
@@ -323,8 +321,8 @@ void DataSolve(Message_Format buf)
         {
             LOG_D("Remote valve open from %ld\r\n",buf.From_ID);
             RadioEnqueue(buf.From_ID,buf.Counter,5,1);
-            Moto_Open(OtherOpen);
-            Last_Close_Flag=0;
+            valve_unlock();
+            valve_open();
             beep_once();
         }
         else
@@ -355,8 +353,8 @@ void DataSolve(Message_Format buf)
         {
             LOG_D("Remote valve close from %ld\r\n",buf.From_ID);
             Warning_Disable();
-            Last_Close_Flag=1;
-            Moto_Close(OtherOff);
+            valve_lock();
+            valve_close();
             beep_once();
         }
         if(buf.From_ID == GetDoorID())

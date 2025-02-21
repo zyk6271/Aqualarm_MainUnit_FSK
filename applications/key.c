@@ -11,7 +11,6 @@
 #include "pin_config.h"
 #include "key.h"
 #include "led.h"
-#include "moto.h"
 #include "Radio_Decoder.h"
 #include "Radio_encoder.h"
 #include "work.h"
@@ -45,7 +44,6 @@ extern rt_sem_t K1_Long_Sem;
 extern rt_sem_t K0_K1_Long_Sem;
 
 extern uint8_t Learn_Flag;
-extern uint8_t Last_Close_Flag;
 
 extern uint8_t Factory_Flag;
 
@@ -64,15 +62,7 @@ void Key_Reponse_Callback(void *parameter)
             switch(GetNowStatus())
             {
             case Close:
-                if(Last_Close_Flag==0)
-                {
-                    Moto_Open(NormalOpen);
-                }
-                else
-                {
-                    led_valve_fail();
-                }
-                LOG_D("Valve Open With ON\r\n");
+                valve_open();
                 break;
             case Open:
                 beep_once();
@@ -87,9 +77,7 @@ void Key_Reponse_Callback(void *parameter)
                 beep_three_times();
                 break;
             case MasterLostPeak:
-                key_down();
-                SetNowStatus(Open);
-                Moto_Open(NormalOpen);
+                valve_open();
                 LOG_D("MasterLostPeak With ON\r\n");
                 break;
             case MasterWaterAlarmActive:
@@ -116,28 +104,25 @@ void Key_Reponse_Callback(void *parameter)
             {
                 Stop_Factory_Cycle();
                 Warning_Disable();
-                Moto_Detect();
+                valve_check();
             }
             else
             {
                 switch(GetNowStatus())
                 {
                 case Close:
-                    if(Last_Close_Flag==0)
+                    if(get_valve_lock())
                     {
-                        key_down();
+                        led_valve_fail();
                     }
                     else
                     {
-                        led_valve_fail();
+                        key_down();
                     }
                     LOG_D("Valve Already Close With OFF\r\n");
                     break;
                 case Open:
-                    key_down();
-                    Last_Close_Flag = 0;
-                    Moto_Close(NormalOff);
-                    LOG_D("Valve Close With OFF\r\n");
+                    valve_close();
                     break;
                 case SlaverLowPower:
                     break;
@@ -148,10 +133,8 @@ void Key_Reponse_Callback(void *parameter)
                     beep_stop();
                     break;
                 case MasterLostPeak:
-                    key_down();
-                    Moto_Close(NormalOff);
+                    valve_close();
                     beep_stop();
-                    SetNowStatus(Close);
                     LOG_D("MasterLostPeak With OFF\r\n");
                     break;
                 case MasterWaterAlarmActive:
@@ -188,6 +171,7 @@ void Key_Reponse_Callback(void *parameter)
         }
         else if(K0_Long_Status==RT_EOK)//ON
         {
+            valve_check();
         }
         else if(K1_Long_Status==RT_EOK)//OFF
         {

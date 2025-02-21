@@ -14,7 +14,6 @@
 #include "flashwork.h"
 #include "led.h"
 #include "status.h"
-#include "moto.h"
 
 #define DBG_TAG "GATEWAY"
 #define DBG_LVL DBG_INFO
@@ -81,11 +80,11 @@ void PowerOn_Upload(void)
         WarUpload_GW(1,0,8,1);//NTC报警
         break;
     case MotoFail:
-        if(Get_Moto1_Fail_FLag())
+        if(get_valve_left_warning_result())
         {
             WarUpload_GW(1,0,2,2);//MOTO1报警
         }
-        if(Get_Moto2_Fail_FLag())
+        if(get_valve_right_warning_result())
         {
             WarUpload_GW(1,0,2,3);//MOTO2报警
         }

@@ -14,7 +14,6 @@
 #include "status.h"
 #include "flashwork.h"
 #include "radio_encoder.h"
-#include "Moto.h"
 #include "work.h"
 #include "string.h"
 #include "rthw.h"
@@ -88,14 +87,16 @@ void SlaverLowBatteryWarning(void *parameter)
 }
 void SlaverUltraLowBatteryWarning(void *parameter)
 {
-    Moto_Close(OtherOff);
+    valve_lock();
+    valve_close();
     led_slave_low_start();
     Now_Status = SlaverUltraLowPower;
     LOG_W("SlaverUltraLowBatteryWarning\r\n");
 }
 void SlaverWaterAlarmWarning(void *parameter)
 {
-    Moto_Close(OtherOff);
+    valve_lock();
+    valve_close();
     led_water_alarm_start();
     Now_Status = SlaverWaterAlarmActive;
     LOG_W("SlaverWaterAlarmWarning\r\n");
@@ -114,7 +115,7 @@ void MasterStatusChangeToDeAvtive(void)
 }
 void MasterWaterAlarmWarning(void *parameter)
 {
-    Moto_Close(NormalOff);
+    valve_close();
     WarUpload_GW(1,0,1,1);//主控水警
     led_water_alarm_start();
     Now_Status = MasterWaterAlarmActive;
@@ -122,7 +123,7 @@ void MasterWaterAlarmWarning(void *parameter)
 }
 void NTCWarningEvent_Callback(void *parameter)
 {
-    Moto_Close(NormalOff);
+    valve_close();
     WarUpload_GW(1,0,8,1);//NTC报警
     led_ntc_alarm();
     Now_Status = NTCWarning;
@@ -130,7 +131,8 @@ void NTCWarningEvent_Callback(void *parameter)
 }
 void Delay_Timer_Callback(void *parameter)
 {
-    Moto_Close(OtherOff);
+    valve_lock();
+    valve_close();
     ControlUpload_GW(1,0,1,0);
     LOG_D("Delay_Timer_Callback is Now\r\n");
 }
@@ -139,15 +141,18 @@ void Remote_Open(void)
     if(Now_Status==Close || Now_Status==Open)
     {
         LOG_D("Remote_Open\r\n");
-        Moto_Open(OtherOpen);
+        valve_lock();
+        valve_close();
     }
-    else {
+    else
+    {
         LOG_I("Remote_Open Fail,Now is %d",Now_Status);
     }
 }
 void Remote_Close(void)
 {
-    Moto_Close(OtherOff);
+    valve_lock();
+    valve_close();
 }
 void Delay_Timer_OpenDoor(uint32_t device_id)
 {
@@ -170,7 +175,7 @@ void OfflineWarning(void *parameter)
 {
     if(Now_Status!=Offline)
     {
-        Moto_Close(NormalOff);
+        valve_close();
         Now_Status = Offline;
         LOG_I("OfflineWarning\r\n");
         led_offline_start();

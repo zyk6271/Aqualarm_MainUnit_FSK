@@ -12,7 +12,6 @@
 #include "rtdevice.h"
 #include "status.h"
 #include "key.h"
-#include "moto.h"
 #include "flashwork.h"
 #include "gateway.h"
 #include "board.h"
@@ -146,11 +145,11 @@ void NTC_Work_Callback(void *parameter)
             Warning_Disable();
             if(NTC_State_read())
             {
-                Moto_Open(NormalOpen);
+                valve_open();
             }
             else
             {
-                Moto_Close(NormalOff);
+                valve_close();
             }
         }
         rt_thread_mdelay(1000);

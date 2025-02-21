@@ -54,6 +54,33 @@ int Flash_Init(void)
     LOG_I("Storage Init Success\r\n");
     return RT_EOK;
 }
+
+uint32_t flash_get_key(char *key_name)
+{
+    uint8_t read_len = 0;
+    uint32_t read_value = 0;
+    char read_value_temp[32] = {0};
+    read_len = ef_get_env_blob(key_name, read_value_temp, 32, NULL);
+    if(read_len>0)
+    {
+        read_value = atol(read_value_temp);
+    }
+    else
+    {
+        read_value = 0;
+    }
+
+    return read_value;
+}
+
+void flash_set_key(char *key_name,uint32_t value)
+{
+    char *value_buf = rt_malloc(64);//申请临时buffer空间
+    rt_sprintf(value_buf, "%d", value);
+    ef_set_env_blob(key_name, value_buf,rt_strlen(value_buf));
+    rt_free(value_buf);
+}
+
 uint8_t Get_LearnNums_Valid(void)
 {
     uint16_t num = 1;

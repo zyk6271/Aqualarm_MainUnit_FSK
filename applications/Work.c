@@ -15,7 +15,6 @@
 #include "pin_config.h"
 #include "led.h"
 #include "status.h"
-#include "moto.h"
 #include "Flashwork.h"
 #include "gateway.h"
 
