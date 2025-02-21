@@ -177,7 +177,7 @@ void Key_Reponse_Callback(void *parameter)
         }
         else if(K0_Long_Status==RT_EOK)//ON
         {
-            valve_check();
+            //valve_check();
         }
         else if(K1_Long_Status==RT_EOK)//OFF
         {
