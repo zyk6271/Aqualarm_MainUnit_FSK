@@ -25,8 +25,6 @@
 
 enum Device_Status Now_Status = Close;
 
-extern uint8_t ValveStatus;
-
 WariningEvent NowStatusEvent;
 WariningEvent SlaverLowPowerEvent;
 WariningEvent SlaverUltraLowPowerEvent;
@@ -141,8 +139,8 @@ void Remote_Open(void)
     if(Now_Status==Close || Now_Status==Open)
     {
         LOG_D("Remote_Open\r\n");
-        valve_lock();
-        valve_close();
+        valve_unlock();
+        valve_open();
     }
     else
     {
@@ -258,7 +256,7 @@ void BackToNormal(void)
     WaterScan_Clear();
     beep_stop();
     led_warn_off();
-    if(ValveStatus)
+    if(get_valve_status())
     {
         Now_Status = Open;
     }

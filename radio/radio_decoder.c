@@ -33,7 +33,6 @@ uint8_t Learn_Flag=0;
 uint8_t GatewayNew_Flag = 0;
 
 extern rt_timer_t Learn_Timer;
-extern uint8_t ValveStatus ;
 
 uint8_t Get_GatewayNew(void)
 {
@@ -193,12 +192,12 @@ void GatewayDataSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
                     if(Rx_message.Data)
                     {
                         Remote_Open();
-                        ControlUpload_GW(1,RadioID,2,ValveStatus);
+                        ControlUpload_GW(1,RadioID,2,get_valve_status());
                     }
                     else
                     {
                         Remote_Close();
-                        ControlUpload_GW(1,RadioID,2,ValveStatus);
+                        ControlUpload_GW(1,RadioID,2,get_valve_status());
                     }
                 }
                 else
@@ -208,7 +207,7 @@ void GatewayDataSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
                 break;
             case 3://心跳应答
                 LOG_I("Heart Reponse\r\n");
-                ControlUpload_GW(1,0,4,ValveStatus);
+                ControlUpload_GW(1,0,4,get_valve_status());
                 break;
             case 4://请求同步
                 LOG_I("Request Sync\r\n");
@@ -332,11 +331,11 @@ void DataSolve(Message_Format buf)
         }
         if(buf.From_ID == GetDoorID())
         {
-            ControlUpload_GW(1,buf.From_ID,6,ValveStatus);
+            ControlUpload_GW(1,buf.From_ID,6,get_valve_status());
         }
         else
         {
-            ControlUpload_GW(1,buf.From_ID,2,ValveStatus);
+            ControlUpload_GW(1,buf.From_ID,2,get_valve_status());
         }
         break;
     case 6://关机
@@ -359,11 +358,11 @@ void DataSolve(Message_Format buf)
         }
         if(buf.From_ID == GetDoorID())
         {
-            ControlUpload_GW(1,buf.From_ID,6,ValveStatus);
+            ControlUpload_GW(1,buf.From_ID,6,get_valve_status());
         }
         else
         {
-            ControlUpload_GW(1,buf.From_ID,2,ValveStatus);
+            ControlUpload_GW(1,buf.From_ID,2,get_valve_status());
         }
         break;
     case 8://延迟

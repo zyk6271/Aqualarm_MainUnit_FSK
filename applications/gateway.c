@@ -20,7 +20,6 @@
 #include <rtdbg.h>
 
 extern Device_Info Global_Device;
-extern uint8_t ValveStatus;
 
 static uint8_t GW_LED_Flag;
 
@@ -95,7 +94,7 @@ void PowerOn_Upload(void)
 }
 void Gateway_Sync(void)
 {
-    ControlUpload_GW(1,0,5,ValveStatus);
+    ControlUpload_GW(1,0,5,get_valve_status());
     PowerOn_Upload();
     Gateway_Sync_Num = 1;
     rt_timer_start(Gateway_Sync_t);
@@ -131,13 +130,12 @@ void Heart_Check(void *parameter)
 }
 void Heart_Test(void *parameter)
 {
-    extern uint8_t ValveStatus;
     if(Heart_Recv_Flag)
     {
         rt_timer_stop(Heart_Test_t);
         wifi_led(1);
         LOG_I("Gateway Test Check Success\r\n");
-        ControlUpload_GW(1,0,5,ValveStatus);
+        ControlUpload_GW(1,0,5,get_valve_status());
         PowerOn_Upload();
     }
     else
@@ -146,7 +144,7 @@ void Heart_Test(void *parameter)
         {
             Heart_Check_Count++;
             wifi_led(0);
-            ControlUpload_GW(0,0,5,ValveStatus);
+            ControlUpload_GW(0,0,5,get_valve_status());
             LOG_W("Gateway Test Check Again %d\r\n",Heart_Check_Count);
         }
         else
@@ -174,7 +172,7 @@ void Gateway_Reload(void)
 void Gateway_Init(void)
 {
     Gateway_ID = Global_Device.ID[Global_Device.GatewayNum];
-    ControlUpload_GW(0,0,5,ValveStatus);
+    ControlUpload_GW(0,0,5,get_valve_status());
     Heart_Test_t = rt_timer_create("Heart_Test", Heart_Test,RT_NULL,5000,RT_TIMER_FLAG_SOFT_TIMER|RT_TIMER_FLAG_PERIODIC);
     Heart_Check_t = rt_timer_create("Heart_Check", Heart_Check,RT_NULL,1000*60*20,RT_TIMER_FLAG_SOFT_TIMER|RT_TIMER_FLAG_PERIODIC);
     Gateway_Sync_t = rt_timer_create("Gateway_Sync", Gateway_Sync_Callback,RT_NULL,2000,RT_TIMER_FLAG_SOFT_TIMER|RT_TIMER_FLAG_PERIODIC);

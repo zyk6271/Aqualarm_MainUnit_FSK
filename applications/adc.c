@@ -20,8 +20,6 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-extern uint8_t ValveStatus;
-
 ADC_HandleTypeDef adc_handle;
 DMA_HandleTypeDef dma_handle;
 
@@ -136,7 +134,7 @@ void NTC_Work_Callback(void *parameter)
         ADC_Voltage_Calc();
         if(ADC_Voltage_Calc()<1.153 && GetNowStatus()!=NTCWarning)
         {
-            NTC_State_Save(ValveStatus);
+            NTC_State_Save(get_valve_status());
             Warning_Enable_Num(8);
         }
         if(ADC_Voltage_Calc()>=1.168 && GetNowStatus()==NTCWarning)

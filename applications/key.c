@@ -35,8 +35,6 @@ uint8_t K1_Status=0;
 uint8_t K1_Long_Status=0;
 uint8_t K0_K1_Status=0;
 
-uint8_t ValveStatus = 0;
-
 extern rt_sem_t K0_Sem;
 extern rt_sem_t K0_Long_Sem;
 extern rt_sem_t K1_Sem;
