@@ -200,10 +200,6 @@ void GatewayDataSolve(int rssi,uint8_t *rx_buffer,uint8_t rx_len)
                         ControlUpload_GW(1,RadioID,2,get_valve_status());
                     }
                 }
-                else
-                {
-                    ControlUpload_GW(0,RadioID,2,3);
-                }
                 break;
             case 3://心跳应答
                 LOG_I("Heart Reponse\r\n");

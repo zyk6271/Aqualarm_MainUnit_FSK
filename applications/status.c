@@ -113,7 +113,10 @@ void MasterStatusChangeToDeAvtive(void)
 }
 void MasterWaterAlarmWarning(void *parameter)
 {
-    valve_close();
+    if(valve_close() == RT_EOK)//valve close success
+    {
+        ControlUpload_GW(1,0,1,0);
+    }
     WarUpload_GW(1,0,1,1);//主控水警
     led_water_alarm_start();
     Now_Status = MasterWaterAlarmActive;
@@ -121,7 +124,10 @@ void MasterWaterAlarmWarning(void *parameter)
 }
 void NTCWarningEvent_Callback(void *parameter)
 {
-    valve_close();
+    if(valve_close() == RT_EOK)//valve close success
+    {
+        ControlUpload_GW(1,0,1,0);
+    }
     WarUpload_GW(1,0,8,1);//NTC报警
     led_ntc_alarm();
     Now_Status = NTCWarning;
@@ -173,7 +179,10 @@ void OfflineWarning(void *parameter)
 {
     if(Now_Status!=Offline)
     {
-        valve_close();
+        if(valve_close() == RT_EOK)//valve close success
+        {
+            ControlUpload_GW(1,0,1,0);
+        }
         Now_Status = Offline;
         LOG_I("OfflineWarning\r\n");
         led_offline_start();

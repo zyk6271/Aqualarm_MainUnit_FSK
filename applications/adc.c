@@ -143,11 +143,17 @@ void NTC_Work_Callback(void *parameter)
             Warning_Disable();
             if(NTC_State_read())
             {
-                valve_open();
+                if(valve_open() == RT_EOK)//valve open success
+                {
+                    ControlUpload_GW(1,0,1,1);
+                }
             }
             else
             {
-                valve_close();
+                if(valve_close() == RT_EOK)//valve close success
+                {
+                    ControlUpload_GW(1,0,1,0);
+                }
             }
         }
         rt_thread_mdelay(1000);
