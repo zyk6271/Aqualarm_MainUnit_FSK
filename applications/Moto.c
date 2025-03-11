@@ -20,19 +20,23 @@
 #include "device.h"
 #include "work.h"
 
-#define DBG_TAG "moto"
-#define DBG_LVL DBG_INFO
+#define DBG_TAG "valve"
+#define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-rt_timer_t Moto1_Timer_Act,Moto2_Timer_Act = RT_NULL;
-rt_timer_t Moto1_Timer_Detect,Moto2_Timer_Detect = RT_NULL;
-rt_timer_t Moto_Detect_Timer = RT_NULL;
+#define VALVE_STATUS_CLOSE   0
+#define VALVE_STATUS_OPEN    1
 
-uint8_t Turn1_Flag;
-uint8_t Turn2_Flag;
-uint8_t Moto1_Fail_FLag;
-uint8_t Moto2_Fail_FLag;
-uint8_t Valve_Alarm_Flag;
+uint8_t valve_left_low_cnt,valve_right_low_cnt = 0;
+uint8_t valve_left_low_check_start,valve_right_low_check_start = 0;
+uint8_t valve_left_detect_low_success,valve_right_detect_low_success = 0;
+uint8_t valve_left_warning_result,valve_right_warning_result = 0;    //0:normal,1:warning
+
+rt_timer_t valve_check_detect_low_timer;
+rt_timer_t valve_check_detect_timeout_timer;
+rt_timer_t valve_check_left_final_timer;
+rt_timer_t valve_check_right_final_timer;
+rt_timer_t valve_detect_once_timer = RT_NULL;
 
 extern uint8_t ValveStatus;
 extern enum Device_Status Now_Status;
@@ -45,7 +49,7 @@ void Moto_InitOpen(uint8_t ActFlag)
     {
         Now_Status = Open;
         led_valve_on();
-        ValveStatus=1;
+        ValveStatus = 1;
         Global_Device.LastFlag = ActFlag;
         Flash_Moto_Change(ActFlag);
         rt_pin_write(Turn1,1);
@@ -73,10 +77,14 @@ void Moto_Open(uint8_t ActFlag)
         Flash_Moto_Change(ActFlag);
         rt_pin_write(Turn1,1);
         rt_pin_write(Turn2,1);
+        rt_timer_stop(valve_check_detect_low_timer);
+        rt_timer_stop(valve_check_detect_timeout_timer);
+        rt_timer_stop(valve_check_left_final_timer);
+        rt_timer_stop(valve_check_right_final_timer);
         if(ActFlag==NormalOpen)
         {
             ControlUpload_GW(1,0,1,1);
-            rt_timer_start(Moto_Detect_Timer);
+            rt_timer_start(valve_detect_once_timer);
         }
         Delay_Timer_Stop();
     }
@@ -102,10 +110,11 @@ void Moto_Close(uint8_t ActFlag)
         rt_pin_write(Turn1,0);
         rt_pin_write(Turn2,0);
         Delay_Timer_Stop();
-        rt_timer_stop(Moto1_Timer_Act);
-        rt_timer_stop(Moto2_Timer_Act);
-        rt_timer_stop(Moto1_Timer_Detect);
-        rt_timer_stop(Moto2_Timer_Detect);
+        rt_timer_stop(valve_check_detect_low_timer);
+        rt_timer_stop(valve_check_detect_timeout_timer);
+        rt_timer_stop(valve_check_left_final_timer);
+        rt_timer_stop(valve_check_right_final_timer);
+        rt_timer_stop(valve_detect_once_timer);
         Key_IO_Init();
         WaterScan_IO_Init();
     }
@@ -123,102 +132,184 @@ void Moto_Close(uint8_t ActFlag)
         LOG_D("No permissions to Off\r\n");
     }
 }
-void Turn1_Edge_Callback(void *parameter)
-{
-    LOG_D("Turn1_Edge_Callback\r\n");
-    Turn1_Flag ++;
-}
-void Turn2_Edge_Callback(void *parameter)
-{
-    LOG_D("Turn2_Edge_Callback\r\n");
-    Turn2_Flag ++;
-}
+
 uint8_t Get_Moto1_Fail_FLag(void)
 {
-    return Moto1_Fail_FLag;
+    return valve_left_warning_result;
 }
+
 uint8_t Get_Moto2_Fail_FLag(void)
 {
-    return Moto2_Fail_FLag;
+    return valve_right_warning_result;
 }
-void Turn1_Timer_Callback(void *parameter)
+
+uint8_t valve_check_detect_low_timer_callback(void *parameter)
 {
-    Key_IO_Init();
-    WaterScan_IO_Init();
-    rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
-    rt_pin_mode(Senor1,PIN_MODE_INPUT);
-    rt_pin_write(Turn1,1);
-    if(Turn1_Flag<2)
+    if(valve_left_low_check_start == 1 && valve_left_detect_low_success == 0)
     {
-        if(!Moto2_Fail_FLag)
+        if(rt_pin_read(Senor1) == 0)
         {
-            Warning_Enable_Num(6);
-            Valve_Alarm_Flag = 1;
+            valve_left_low_cnt++;
         }
-        Moto1_Fail_FLag = 1;
-        LOG_E("Moto1 is Fail\r\n");
+        else
+        {
+            valve_left_low_cnt = 0;
+        }
+
+        if(valve_left_low_cnt > 3)
+        {
+            valve_left_low_check_start = 0;
+            valve_left_detect_low_success = 1;
+            rt_pin_write(Turn1,PIN_HIGH);
+            rt_timer_start(valve_check_left_final_timer);
+        }
+        rt_kprintf("valve_left_low_cnt %d\r\n",valve_left_low_cnt);
     }
-    else
+
+    if(valve_right_low_check_start == 1 && valve_right_detect_low_success == 0)
     {
-        if(!Moto2_Fail_FLag)
+        if(rt_pin_read(Senor2) == 0)
+        {
+            valve_right_low_cnt++;
+        }
+        else
+        {
+            valve_right_low_cnt = 0;
+        }
+
+        if(valve_right_low_cnt > 3)
+        {
+            valve_right_low_check_start = 0;
+            valve_right_detect_low_success = 1;
+            rt_pin_write(Turn2,PIN_HIGH);
+            rt_timer_start(valve_check_right_final_timer);
+        }
+        rt_kprintf("valve_right_low_cnt %d\r\n",valve_right_low_cnt);
+    }
+
+    if(valve_left_low_check_start == 0 && valve_right_low_check_start == 0)
+    {
+        rt_timer_stop(valve_check_detect_low_timer);
+    }
+}
+
+uint8_t valve_check_detect_timeout_timer_callback(void *parameter)
+{
+    if(valve_left_low_check_start == 1 && valve_left_detect_low_success == 0)
+    {
+        valve_left_warning_result = 1;
+        valve_left_low_check_start = 0;
+        Warning_Enable_Num(6);
+        rt_pin_write(Turn1,PIN_HIGH);
+        rt_timer_stop(valve_check_detect_low_timer);
+        rt_kprintf("valve_left_turn_check fail\r\n");
+    }
+
+    if(valve_right_low_check_start == 1 && valve_right_detect_low_success == 0)
+    {
+        valve_right_warning_result = 1;
+        valve_right_low_check_start = 0;
+        Warning_Enable_Num(9);
+        rt_pin_write(Turn2,PIN_HIGH);
+        rt_timer_stop(valve_check_detect_low_timer);
+        rt_kprintf("valve_right_turn_check fail\r\n");
+    }
+}
+
+uint8_t valve_check_left_final_timer_callback(void *parameter)
+{
+    if(rt_pin_read(Senor1) == 1)
+    {
+        valve_left_warning_result = 0;
+        if(valve_right_warning_result == 0)
         {
             WarUpload_GW(1,0,2,0);//MOTO1解除报警
-            Valve_Alarm_Flag = 0;
         }
-        Moto1_Fail_FLag = 0;
-        LOG_D("Moto1 is Good\r\n");
-    }
-}
-void Turn2_Timer_Callback(void *parameter)
-{
-    Key_IO_Init();
-    WaterScan_IO_Init();
-    rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
-    rt_pin_mode(Senor2,PIN_MODE_INPUT);
-    rt_pin_write(Turn2,1);
-    if(Turn2_Flag<2)
-    {
-        Warning_Enable_Num(9);
-        Moto2_Fail_FLag = 1;
-        Valve_Alarm_Flag = 1;
-        LOG_E("Moto2 is Fail\r\n");
+        rt_kprintf("valve_left_check success\r\n");
     }
     else
     {
-        WarUpload_GW(1,0,2,1);//MOTO2解除报警
-        Moto2_Fail_FLag = 0;
-        Valve_Alarm_Flag = 0;
-        LOG_D("Moto2 is Good\r\n");
+        valve_left_warning_result = 1;
+        Warning_Enable_Num(6);
+        rt_kprintf("valve_left_check fail\r\n");
     }
 }
-void Moto1_Timer_Act_Callback(void *parameter)
+
+uint8_t valve_check_right_final_timer_callback(void *parameter)
 {
-    rt_pin_write(Turn1,1);
-    rt_timer_start(Moto1_Timer_Detect);
+    if(rt_pin_read(Senor2) == 1)
+    {
+        valve_right_warning_result = 0;
+        if(valve_left_warning_result == 0)
+        {
+            WarUpload_GW(1,0,2,1);//MOTO2解除报警
+        }
+        rt_kprintf("valve_right_check success\r\n");
+    }
+    else
+    {
+        valve_right_warning_result = 1;
+        Warning_Enable_Num(9);
+        rt_kprintf("valve_right_check fail\r\n");
+    }
 }
-void Moto2_Timer_Act_Callback(void *parameter)
+
+void Moto_Detect(void)
 {
-    rt_pin_write(Turn2,1);
-    rt_timer_start(Moto2_Timer_Detect);
+    if(ValveStatus == VALVE_STATUS_CLOSE)
+    {
+        return;
+    }
+
+    valve_left_low_cnt = 0;
+    valve_right_low_cnt = 0;
+    valve_left_low_check_start = 0;
+    valve_right_low_check_start = 0;
+    valve_left_detect_low_success = 0;
+    valve_right_detect_low_success = 0;
+
+    rt_timer_stop(valve_check_detect_low_timer);
+    rt_timer_stop(valve_check_detect_timeout_timer);
+    rt_timer_stop(valve_check_left_final_timer);
+    rt_timer_stop(valve_check_right_final_timer);
+    rt_timer_stop(valve_detect_once_timer);
+
+    if(rt_pin_read(Senor1))
+    {
+        valve_left_low_check_start = 1;
+        rt_pin_write(Turn1,PIN_LOW);
+        rt_timer_start(valve_check_detect_low_timer);
+        rt_timer_start(valve_check_detect_timeout_timer);
+        rt_kprintf("valve_left_turn_check start\r\n");
+    }
+    if(rt_pin_read(Senor2))
+    {
+        valve_right_low_check_start = 1;
+        rt_pin_write(Turn2,PIN_LOW);
+        rt_timer_start(valve_check_detect_low_timer);
+        rt_timer_start(valve_check_detect_timeout_timer);
+        rt_kprintf("valve_right_turn_check start\r\n");
+    }
 }
-void Moto_Detect_Timer_Callback(void *parameter)
+
+void valve_detect_once_timer_callback(void *parameter)
 {
-    LOG_D("Moto_Detect_Timer_Callback\r\n");
     Moto_Detect();
 }
+
 void Moto_Init(void)
 {
-    rt_pin_mode(Senor1,PIN_MODE_INPUT);
-    rt_pin_mode(Senor2,PIN_MODE_INPUT);
     rt_pin_mode(Turn1,PIN_MODE_OUTPUT);
     rt_pin_mode(Turn2,PIN_MODE_OUTPUT);
-    rt_pin_attach_irq(Senor1, PIN_IRQ_MODE_RISING_FALLING, Turn1_Edge_Callback, RT_NULL);
-    rt_pin_attach_irq(Senor2, PIN_IRQ_MODE_RISING_FALLING, Turn2_Edge_Callback, RT_NULL);
-    Moto1_Timer_Act = rt_timer_create("Moto1_Timer_Act", Moto1_Timer_Act_Callback, RT_NULL, 5100, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
-    Moto2_Timer_Act = rt_timer_create("Moto2_Timer_Act", Moto2_Timer_Act_Callback, RT_NULL, 5000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
-    Moto1_Timer_Detect = rt_timer_create("Moto1_Timer_Detect", Turn1_Timer_Callback, RT_NULL, 3000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
-    Moto2_Timer_Detect = rt_timer_create("Moto2_Timer_Detect", Turn2_Timer_Callback, RT_NULL, 3000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
-    Moto_Detect_Timer = rt_timer_create("Moto_Detect", Moto_Detect_Timer_Callback, RT_NULL, 60*1000*5, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+    rt_pin_mode(Senor1,PIN_MODE_INPUT);
+    rt_pin_mode(Senor2,PIN_MODE_INPUT);
+
+    valve_detect_once_timer  = rt_timer_create("valve_detect", valve_detect_once_timer_callback, RT_NULL, 60*1000*5, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+    valve_check_detect_low_timer = rt_timer_create("valve_check_detect_low", valve_check_detect_low_timer_callback, RT_NULL, 500, RT_TIMER_FLAG_PERIODIC|RT_TIMER_FLAG_SOFT_TIMER);
+    valve_check_detect_timeout_timer = rt_timer_create("valve_check_detect_timeout", valve_check_detect_timeout_timer_callback, RT_NULL, 10000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+    valve_check_left_final_timer = rt_timer_create("valve_check_left_final", valve_check_left_final_timer_callback, RT_NULL, 10000, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+    valve_check_right_final_timer = rt_timer_create("valve_check_right_final", valve_check_right_final_timer_callback, RT_NULL, 10100, RT_TIMER_FLAG_ONE_SHOT|RT_TIMER_FLAG_SOFT_TIMER);
+
     if(Flash_Get_SlaveAlarmFlag())
     {
         Warning_Enable_Num(2);
@@ -228,32 +319,5 @@ void Moto_Init(void)
     if(Global_Device.LastFlag != OtherOff)
     {
         Moto_InitOpen(NormalOpen);
-    }
-    LOG_D("Moto is Init Success,Flag is %d\r\n",Global_Device.LastFlag);
-}
-void Moto_Detect(void)
-{
-    if(ValveStatus == 1)
-    {
-        Turn1_Flag = 0;
-        Turn2_Flag = 0;
-        Moto1_Fail_FLag = 0;
-        Moto2_Fail_FLag = 0;
-        if(rt_pin_read(Senor1))
-        {
-            Key_IO_DeInit();
-            WaterScan_IO_DeInit();
-            rt_pin_irq_enable(Senor1, PIN_IRQ_ENABLE);
-            rt_pin_write(Turn1,0);
-            rt_timer_start(Moto1_Timer_Act);
-        }
-        if(rt_pin_read(Senor2))
-        {
-            Key_IO_DeInit();
-            WaterScan_IO_DeInit();
-            rt_pin_irq_enable(Senor2, PIN_IRQ_ENABLE);
-            rt_pin_write(Turn2,0);
-            rt_timer_start(Moto2_Timer_Act);
-        }
     }
 }
