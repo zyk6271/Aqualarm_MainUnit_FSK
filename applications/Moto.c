@@ -235,12 +235,10 @@ void Moto_Detect(void)
 {
     if(ValveStatus == 1)
     {
-        Turn1_Flag = 0;
-        Turn2_Flag = 0;
-        Moto1_Fail_FLag = 0;
-        Moto2_Fail_FLag = 0;
         if(rt_pin_read(Senor1))
         {
+            Turn1_Flag = 0;
+            Moto1_Fail_FLag = 0;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor1, PIN_IRQ_ENABLE);
@@ -249,6 +247,8 @@ void Moto_Detect(void)
         }
         if(rt_pin_read(Senor2))
         {
+            Turn2_Flag = 0;
+            Moto2_Fail_FLag = 0;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor2, PIN_IRQ_ENABLE);
