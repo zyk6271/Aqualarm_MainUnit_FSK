@@ -81,11 +81,11 @@ void PowerOn_Upload(void)
         WarUpload_GW(1,0,8,1);//NTC报警
         break;
     case MotoFail:
-        if(Get_Moto1_Fail_FLag())
+        if(Get_Moto1_Fail_Flag())
         {
             WarUpload_GW(1,0,2,2);//MOTO1报警
         }
-        if(Get_Moto2_Fail_FLag())
+        if(Get_Moto2_Fail_Flag())
         {
             WarUpload_GW(1,0,2,3);//MOTO2报警
         }

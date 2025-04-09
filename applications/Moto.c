@@ -28,11 +28,13 @@ rt_timer_t Moto1_Timer_Act,Moto2_Timer_Act = RT_NULL;
 rt_timer_t Moto1_Timer_Detect,Moto2_Timer_Detect = RT_NULL;
 rt_timer_t Moto_Detect_Timer = RT_NULL;
 
-uint8_t Turn1_Flag;
-uint8_t Turn2_Flag;
-uint8_t Moto1_Fail_FLag;
-uint8_t Moto2_Fail_FLag;
-uint8_t Valve_Alarm_Flag;
+uint8_t Turn1_Flag = 0;
+uint8_t Turn2_Flag = 0;
+uint8_t Moto1_Fail_Flag = 0;
+uint8_t Moto2_Fail_Flag = 0;
+uint8_t Moto1_Detecting_Flag = 0;
+uint8_t Moto2_Detecting_Flag = 0;
+uint8_t Valve_Alarm_Flag = 0;
 
 extern uint8_t ValveStatus;
 extern enum Device_Status Now_Status;
@@ -133,13 +135,13 @@ void Turn2_Edge_Callback(void *parameter)
     LOG_D("Turn2_Edge_Callback\r\n");
     Turn2_Flag ++;
 }
-uint8_t Get_Moto1_Fail_FLag(void)
+uint8_t Get_Moto1_Fail_Flag(void)
 {
-    return Moto1_Fail_FLag;
+    return Moto1_Fail_Flag;
 }
-uint8_t Get_Moto2_Fail_FLag(void)
+uint8_t Get_Moto2_Fail_Flag(void)
 {
-    return Moto2_Fail_FLag;
+    return Moto2_Fail_Flag;
 }
 void Turn1_Timer_Callback(void *parameter)
 {
@@ -148,24 +150,25 @@ void Turn1_Timer_Callback(void *parameter)
     rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
     rt_pin_mode(Senor1,PIN_MODE_INPUT);
     rt_pin_write(Turn1,1);
+    Moto1_Detecting_Flag = 0;
     if(Turn1_Flag<2)
     {
-        if(!Moto2_Fail_FLag)
+        if(!Moto2_Fail_Flag)
         {
             Warning_Enable_Num(6);
             Valve_Alarm_Flag = 1;
         }
-        Moto1_Fail_FLag = 1;
+        Moto1_Fail_Flag = 1;
         LOG_E("Moto1 is Fail\r\n");
     }
     else
     {
-        if(!Moto2_Fail_FLag)
+        if(!Moto2_Fail_Flag)
         {
             WarUpload_GW(1,0,2,0);//MOTO1解除报警
             Valve_Alarm_Flag = 0;
         }
-        Moto1_Fail_FLag = 0;
+        Moto1_Fail_Flag = 0;
         LOG_D("Moto1 is Good\r\n");
     }
 }
@@ -176,17 +179,18 @@ void Turn2_Timer_Callback(void *parameter)
     rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
     rt_pin_mode(Senor2,PIN_MODE_INPUT);
     rt_pin_write(Turn2,1);
+    Moto2_Detecting_Flag = 0;
     if(Turn2_Flag<2)
     {
         Warning_Enable_Num(9);
-        Moto2_Fail_FLag = 1;
+        Moto2_Fail_Flag = 1;
         Valve_Alarm_Flag = 1;
         LOG_E("Moto2 is Fail\r\n");
     }
     else
     {
         WarUpload_GW(1,0,2,1);//MOTO2解除报警
-        Moto2_Fail_FLag = 0;
+        Moto2_Fail_Flag = 0;
         Valve_Alarm_Flag = 0;
         LOG_D("Moto2 is Good\r\n");
     }
@@ -235,20 +239,22 @@ void Moto_Detect(void)
 {
     if(ValveStatus == 1)
     {
-        if(rt_pin_read(Senor1))
+        if(rt_pin_read(Senor1) == 1 && Moto1_Detecting_Flag == 0)
         {
             Turn1_Flag = 0;
-            Moto1_Fail_FLag = 0;
+            Moto1_Fail_Flag = 0;
+            Moto1_Detecting_Flag = 1;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor1, PIN_IRQ_ENABLE);
             rt_pin_write(Turn1,0);
             rt_timer_start(Moto1_Timer_Act);
         }
-        if(rt_pin_read(Senor2))
+        if(rt_pin_read(Senor2) == 1 && Moto2_Detecting_Flag == 0)
         {
             Turn2_Flag = 0;
-            Moto2_Fail_FLag = 0;
+            Moto2_Fail_Flag = 0;
+            Moto2_Detecting_Flag = 1;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor2, PIN_IRQ_ENABLE);
