@@ -47,8 +47,6 @@ extern rt_sem_t K0_K1_Long_Sem;
 extern uint8_t Learn_Flag;
 extern uint8_t Last_Close_Flag;
 
-extern uint8_t Factory_Flag;
-
 void Key_Reponse_Callback(void *parameter)
 {
     Key_SemInit();
@@ -112,11 +110,9 @@ void Key_Reponse_Callback(void *parameter)
         }
         else if(K1_Status==RT_EOK)//OFF
         {
-            if(Factory_Flag)
+            if(factory_get_flag())
             {
-                Stop_Factory_Cycle();
-                Warning_Disable();
-                Moto_Detect();
+                factory_valve_test();
             }
             else
             {

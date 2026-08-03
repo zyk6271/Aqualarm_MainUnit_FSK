@@ -156,6 +156,10 @@ void Turn1_Timer_Callback(void *parameter)
             Valve_Alarm_Flag = 1;
         }
         Moto1_Fail_FLag = 1;
+        if(factory_get_flag())
+        {
+            led_valve_fail();
+        }
         LOG_E("Moto1 is Fail\r\n");
     }
     else
@@ -166,6 +170,10 @@ void Turn1_Timer_Callback(void *parameter)
             Valve_Alarm_Flag = 0;
         }
         Moto1_Fail_FLag = 0;
+        if(Valve_Alarm_Flag == 0 && Moto2_Fail_FLag == 0)
+        {
+            led_factory_success_start();
+        }
         LOG_D("Moto1 is Good\r\n");
     }
 }
@@ -181,6 +189,10 @@ void Turn2_Timer_Callback(void *parameter)
         Warning_Enable_Num(9);
         Moto2_Fail_FLag = 1;
         Valve_Alarm_Flag = 1;
+        if(factory_get_flag())
+        {
+            led_valve_fail();
+        }
         LOG_E("Moto2 is Fail\r\n");
     }
     else
@@ -188,6 +200,10 @@ void Turn2_Timer_Callback(void *parameter)
         WarUpload_GW(1,0,2,1);//MOTO2解除报警
         Moto2_Fail_FLag = 0;
         Valve_Alarm_Flag = 0;
+        if(Valve_Alarm_Flag == 0 && Moto1_Fail_FLag == 1)
+        {
+            led_factory_success_start();
+        }
         LOG_D("Moto2 is Good\r\n");
     }
 }
@@ -256,4 +272,11 @@ void Moto_Detect(void)
             rt_timer_start(Moto2_Timer_Act);
         }
     }
+}
+
+void valve_factory_check_reset(void)
+{
+    Moto1_Fail_FLag = 0;
+    Moto1_Fail_FLag = 0;
+    Valve_Alarm_Flag = 0;
 }

@@ -45,18 +45,6 @@ void Set_GatewayNew(uint8_t value)
 {
     GatewayNew_Flag = value;
 }
-uint8_t Factory_Detect(void)
-{
-    rt_pin_mode(TEST, PIN_MODE_INPUT_PULLUP);
-    if(rt_pin_read(TEST)==0)
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
 uint8_t Check_Valid(uint32_t From_id)
 {
     return Flash_Get_Key_Valid(From_id);

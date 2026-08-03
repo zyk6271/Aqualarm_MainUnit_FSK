@@ -27,6 +27,7 @@ static led_t *off_red_led_three = RT_NULL;
 static led_t *wifi_green_led = RT_NULL;
 static led_t *wifi_red_led = RT_NULL;
 static led_t *wifi_blue_led = RT_NULL;
+static led_t *led_obj_factory_success = RT_NULL;
 
 extern uint32_t Gateway_ID;
 
@@ -71,6 +72,16 @@ static void off_red_on(void *param)
 static void off_red_off(void *param)
 {
     ws2812b_red(1,0);
+}
+
+static void off_green_on(void *param)
+{
+    ws2812b_green(1,1);
+}
+
+static void off_green_off(void *param)
+{
+    ws2812b_green(1,0);
 }
 
 static void on_green_on(void *param)
@@ -137,6 +148,7 @@ void wifi_led(uint8_t num)
 }
 void led_valve_fail(void)
 {
+    led_stop(led_obj_factory_success);
     led_set_mode(beep, 3,"200,200,");
     led_start(beep);
     led_set_mode(off_red, 3,"200,200,");
@@ -270,6 +282,12 @@ void led_warn_off(void)
     led_stop(off_red);
     led_stop(loss_red);
 }
+
+void led_factory_success_start(void)
+{
+    led_start(led_obj_factory_success);
+}
+
 int led_Init(void)
 {
     led_mem_opreation.malloc_fn = (void* (*)(size_t))rt_malloc;
@@ -312,6 +330,9 @@ int led_Init(void)
 
     wifi_blue_led = led_create(gw_blue_on, gw_blue_off, NULL);
     led_set_mode(wifi_blue_led, 1, "50,0,");
+
+    led_obj_factory_success = led_create(off_green_on, off_green_off, NULL);
+    led_set_mode(led_obj_factory_success, LOOP_PERMANENT, "200,0,");
 
     rt_thread_t tid = RT_NULL;
     tid = rt_thread_create("signal_led",

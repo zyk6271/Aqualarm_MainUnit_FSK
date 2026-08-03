@@ -17,39 +17,55 @@
 #define DBG_LVL DBG_LOG
 #include <rtdbg.h>
 
-uint8_t Factory_Flag;
-rt_timer_t Factory_Cycle = RT_NULL;
-void Factory_Cycle_Callback(void *parameter)
+static uint8_t factory_test = 0;
+rt_timer_t factory_rf_cycle_timer = RT_NULL;
+
+uint8_t factory_get_flag(void)
+{
+    return factory_test;
+}
+
+void factory_rf_cycle_callback(void *parameter)
 {
     RadioEnqueue(98989898,1,9,0);
 }
-void Factory_Init(void)
+
+void factory_rf_start(void)
 {
-    Factory_Cycle = rt_timer_create("Factory_Cycle",Factory_Cycle_Callback,RT_NULL,2000,RT_TIMER_FLAG_PERIODIC|RT_TIMER_FLAG_SOFT_TIMER);
-    Start_Factory_Cycle();
-}
-void DetectFactory(void)
-{
-    rt_pin_mode(TEST,PIN_MODE_INPUT_PULLUP);
-    Factory_Flag = !rt_pin_read(TEST);
-    if(Factory_Flag)
+    if(factory_rf_cycle_timer != RT_NULL)
     {
-        Factory_Init();
-    }
-}
-void Stop_Factory_Cycle(void)
-{
-    if(Factory_Cycle!=RT_NULL)
-    {
-        rt_timer_stop(Factory_Cycle);
-    }
-}
-void Start_Factory_Cycle(void)
-{
-    if(Factory_Cycle!=RT_NULL)
-    {
-        rt_timer_start(Factory_Cycle);
-        LOG_I("Start Factory_Cycle\r\n");
+        rt_timer_start(factory_rf_cycle_timer);
+        LOG_I("Factory RF cycle started\r\n");
     }
 }
 
+void factory_rf_stop(void)
+{
+    if(factory_rf_cycle_timer != RT_NULL)
+    {
+        rt_timer_stop(factory_rf_cycle_timer);
+        LOG_I("Factory RF cycle stopped\r\n");
+    }
+}
+
+void factory_detect(void)
+{
+    rt_pin_mode(FACTORY_DETECT_PIN, PIN_MODE_INPUT_PULLUP);
+    if(rt_pin_read(FACTORY_DETECT_PIN) == 0)
+    {
+        rt_thread_mdelay(200);
+        if(rt_pin_read(FACTORY_DETECT_PIN) == 0)
+        {
+            factory_test = 1;
+            factory_rf_cycle_timer = rt_timer_create("factory_rf", factory_rf_cycle_callback, RT_NULL, 2000, RT_TIMER_FLAG_PERIODIC | RT_TIMER_FLAG_SOFT_TIMER);
+            factory_rf_start();
+        }
+    }
+}
+
+void factory_valve_test(void)
+{
+    factory_rf_stop();
+    valve_factory_check_reset();
+    Moto_Detect();
+}

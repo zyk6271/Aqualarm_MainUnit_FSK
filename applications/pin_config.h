@@ -31,6 +31,6 @@
 #define Turn2                   10
 #define Senor1                  11
 #define Senor2                  28
-#define TEST                    1
+#define FACTORY_DETECT_PIN      1
 
 #endif /* APPLICATIONS_PIN_CONFIG_H_ */

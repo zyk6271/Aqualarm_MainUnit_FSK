@@ -29,7 +29,7 @@ int main(void)
     Moto_Init();
     Button_Init();
     WaterScan_Init();
-    DetectFactory();
+    factory_detect();
     Gateway_Init();
     while (1)
     {
