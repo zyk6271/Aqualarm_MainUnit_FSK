@@ -50,6 +50,7 @@ void Moto_InitOpen(uint8_t ActFlag)
         Flash_Moto_Change(ActFlag);
         rt_pin_write(Turn1,1);
         rt_pin_write(Turn2,1);
+        rt_timer_start(Moto_Detect_Timer);
     }
     else if(Global_Device.LastFlag == OtherOff && ActFlag == NormalOpen)
     {
