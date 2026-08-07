@@ -148,7 +148,6 @@ void wifi_led(uint8_t num)
 }
 void led_valve_fail(void)
 {
-    led_stop(led_obj_factory_success);
     led_set_mode(beep, 3,"200,200,");
     led_start(beep);
     led_set_mode(off_red, 3,"200,200,");
