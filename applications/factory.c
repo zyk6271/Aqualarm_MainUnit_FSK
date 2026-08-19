@@ -11,6 +11,7 @@
 #include "rtdevice.h"
 #include "pin_config.h"
 #include "factory.h"
+#include "moto.h"
 #include "radio_encoder.h"
 
 #define DBG_TAG "Factory"

@@ -20,6 +20,7 @@ void Moto_OpenByWifi(void);
 void Moto_CloseByWifi(void);
 uint8_t Get_Moto1_Fail_FLag(void);
 uint8_t Get_Moto2_Fail_FLag(void);
+void valve_factory_check_reset(void);
 
 
 #endif /* APPLICATIONS_MOTO_H_ */

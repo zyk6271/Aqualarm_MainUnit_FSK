@@ -19,6 +19,7 @@
 #include "radio_encoder.h"
 #include "device.h"
 #include "work.h"
+#include "factory.h"
 
 #define DBG_TAG "moto"
 #define DBG_LVL DBG_INFO
@@ -28,11 +29,13 @@ rt_timer_t Moto1_Timer_Act,Moto2_Timer_Act = RT_NULL;
 rt_timer_t Moto1_Timer_Detect,Moto2_Timer_Detect = RT_NULL;
 rt_timer_t Moto_Detect_Timer = RT_NULL;
 
-uint8_t Turn1_Flag;
-uint8_t Turn2_Flag;
-uint8_t Moto1_Fail_FLag;
-uint8_t Moto2_Fail_FLag;
-uint8_t Valve_Alarm_Flag;
+uint8_t Turn1_Flag = 0;
+uint8_t Turn2_Flag = 0;
+uint8_t Moto1_Fail_FLag = 0;
+uint8_t Moto2_Fail_FLag = 0;
+uint8_t Valve_Alarm_Flag = 0;
+uint8_t Moto1_Detecting_Flag = 0;
+uint8_t Moto2_Detecting_Flag = 0;
 
 extern uint8_t ValveStatus;
 extern enum Device_Status Now_Status;
@@ -91,6 +94,14 @@ void Moto_Close(uint8_t ActFlag)
 {
     if(Global_Device.LastFlag != OtherOff )
     {
+        rt_timer_stop(Moto1_Timer_Act);
+        rt_timer_stop(Moto2_Timer_Act);
+        rt_timer_stop(Moto1_Timer_Detect);
+        rt_timer_stop(Moto2_Timer_Detect);
+        Moto1_Detecting_Flag = 0;
+        Moto2_Detecting_Flag = 0;
+        rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
+        rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
         Now_Status = Close;
         led_valve_off();
         ValveStatus=0;
@@ -103,10 +114,6 @@ void Moto_Close(uint8_t ActFlag)
         rt_pin_write(Turn1,0);
         rt_pin_write(Turn2,0);
         Delay_Timer_Stop();
-        rt_timer_stop(Moto1_Timer_Act);
-        rt_timer_stop(Moto2_Timer_Act);
-        rt_timer_stop(Moto1_Timer_Detect);
-        rt_timer_stop(Moto2_Timer_Detect);
         Key_IO_Init();
         WaterScan_IO_Init();
     }
@@ -144,8 +151,7 @@ uint8_t Get_Moto2_Fail_FLag(void)
 }
 void Turn1_Timer_Callback(void *parameter)
 {
-    Key_IO_Init();
-    WaterScan_IO_Init();
+    Moto1_Detecting_Flag = 0;
     rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
     rt_pin_mode(Senor1,PIN_MODE_INPUT);
     rt_pin_write(Turn1,1);
@@ -169,11 +175,15 @@ void Turn1_Timer_Callback(void *parameter)
         Moto1_Fail_FLag = 0;
         LOG_D("Moto1 is Good\r\n");
     }
+    if(Moto1_Detecting_Flag == 0 && Moto2_Detecting_Flag == 0)
+    {
+        Key_IO_Init();
+        WaterScan_IO_Init();
+    }
 }
 void Turn2_Timer_Callback(void *parameter)
 {
-    Key_IO_Init();
-    WaterScan_IO_Init();
+    Moto2_Detecting_Flag = 0;
     rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
     rt_pin_mode(Senor2,PIN_MODE_INPUT);
     rt_pin_write(Turn2,1);
@@ -194,6 +204,11 @@ void Turn2_Timer_Callback(void *parameter)
             led_factory_success_start();
         }
         LOG_D("Moto2 is Good\r\n");
+    }
+    if(Moto1_Detecting_Flag == 0 && Moto2_Detecting_Flag == 0)
+    {
+        Key_IO_Init();
+        WaterScan_IO_Init();
     }
 }
 void Moto1_Timer_Act_Callback(void *parameter)
@@ -240,20 +255,22 @@ void Moto_Detect(void)
 {
     if(ValveStatus == 1)
     {
-        if(rt_pin_read(Senor1))
+        if(rt_pin_read(Senor1) && Moto1_Detecting_Flag == 0)
         {
             Turn1_Flag = 0;
             Moto1_Fail_FLag = 0;
+            Moto1_Detecting_Flag = 1;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor1, PIN_IRQ_ENABLE);
             rt_pin_write(Turn1,0);
             rt_timer_start(Moto1_Timer_Act);
         }
-        if(rt_pin_read(Senor2))
+        if(rt_pin_read(Senor2) && Moto2_Detecting_Flag == 0)
         {
             Turn2_Flag = 0;
             Moto2_Fail_FLag = 0;
+            Moto2_Detecting_Flag = 1;
             Key_IO_DeInit();
             WaterScan_IO_DeInit();
             rt_pin_irq_enable(Senor2, PIN_IRQ_ENABLE);
@@ -268,4 +285,6 @@ void valve_factory_check_reset(void)
     Moto1_Fail_FLag = 0;
     Moto2_Fail_FLag = 0;
     Valve_Alarm_Flag = 0;
+    Moto1_Detecting_Flag = 0;
+    Moto2_Detecting_Flag = 0;
 }

@@ -10,8 +10,12 @@
 #ifndef APPLICATIONS_FACTORY_H_
 #define APPLICATIONS_FACTORY_H_
 
-void DetectFactory(void);
-void Stop_Factory_Cycle(void);
-void Start_Factory_Cycle(void);
+#include <stdint.h>
+
+uint8_t factory_get_flag(void);
+void factory_rf_start(void);
+void factory_rf_stop(void);
+void factory_detect(void);
+void factory_valve_test(void);
 
 #endif /* APPLICATIONS_FACTORY_H_ */
