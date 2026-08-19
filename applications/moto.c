@@ -101,7 +101,9 @@ void Moto_Close(uint8_t ActFlag)
         Moto1_Detecting_Flag = 0;
         Moto2_Detecting_Flag = 0;
         rt_pin_irq_enable(Senor1, PIN_IRQ_DISABLE);
+        rt_pin_mode(Senor1,PIN_MODE_INPUT);
         rt_pin_irq_enable(Senor2, PIN_IRQ_DISABLE);
+        rt_pin_mode(Senor2,PIN_MODE_INPUT);
         Now_Status = Close;
         led_valve_off();
         ValveStatus=0;
